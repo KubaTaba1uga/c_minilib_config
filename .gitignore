@@ -1,0 +1,8 @@
+*.o*
+*.mod*
+*.ko*
+*.order*
+*.symvers*
+*~*
+*#*
+bkp/*
