@@ -34,6 +34,7 @@ def install(c):
     """
     dependencies = {
         "meson": "meson",
+        "ruby": "ruby",
         C_COMPILER: C_COMPILER,
         C_FORMATTER: C_FORMATTER,
         C_LINTTER: C_LINTTER,
@@ -59,6 +60,15 @@ def build(c):
     _run_command(c, f"meson compile -C {BUILD_PATH}")
 
     _pr_info("Build done")
+
+
+@task
+def test(c):
+    _pr_info("Testing...")
+
+    _run_command(c, f"meson test -C {BUILD_PATH}")
+
+    _pr_info("Testing done")
 
 
 @task
