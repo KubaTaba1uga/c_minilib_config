@@ -130,7 +130,8 @@ def clean(c, extra=""):
         inv clean --extra='**/*.log'
     """
     patterns = [
-        "build/*",
+        "build",
+        ".cache",
         "**/*~",
         "**/#*",
         "*~",
@@ -146,10 +147,10 @@ def clean(c, extra=""):
         for path in glob.glob(pattern, recursive=True):
             if os.path.isfile(path):
                 os.remove(path)
-                print(f"Removed file {path}")
+                _pr_debug(f"Removed file {path}")
             elif os.path.isdir(path):
                 shutil.rmtree(path)
-                print(f"Removed directory {path}")
+                _pr_debug(f"Removed directory {path}")
 
     _pr_info("Clean up completed.")
 

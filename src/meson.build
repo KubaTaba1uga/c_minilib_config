@@ -1,3 +1,5 @@
 sources = files(
-   'main.c',
+   'c_minilib_config.c',
 )
+
+subdir('error')
