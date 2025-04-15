@@ -1,2 +1,2 @@
-Checks: 'llvm-*,clang-analyzer-*'
 WarningsAsErrors: ''
+Checks: 'llvm-*,clang-analyzer-*,performance-*,bugprone-*,readability-*,-llvm-header-guard'

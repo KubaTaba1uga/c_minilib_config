@@ -4,6 +4,7 @@
 #include <c_minilib_error.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 //
@@ -31,7 +32,8 @@
 
 struct cmc_ConfigSettings {
   char **supported_paths;
-  char *name_override;
+  uint32_t paths_length;
+  char *name;
   void (*log_func)(int log_level, char *msg);
 };
 
@@ -54,11 +56,11 @@ typedef struct cmx_Error *cmc_error_t;
 
 cmc_error_t cmc_lib_init(void);
 cmc_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,
-                              struct cmc_Config *config);
+                              struct cmc_Config **config);
+void cmc_config_destroy(struct cmc_Config **config);
 cmc_error_t cmc_config_add_field(const struct cmc_ConfigField *field,
                                  struct cmc_Config *config);
 cmc_error_t cmc_config_parse(struct cmc_Config *config);
-cmc_error_t cmc_config_destroy(struct cmc_Config *config);
 cmc_error_t cmc_config_get_str(const char *name,
                                const struct cmc_Config *config, size_t n,
                                char buffer[n]);
