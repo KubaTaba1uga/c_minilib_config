@@ -60,7 +60,7 @@ def build(c, debug=False):
     _run_command(c, f"mkdir -p {BUILD_PATH}")
 
     sanitize_option = (
-        "-Db_sanitize=address,undefined -Db_lundef=false -Dbacktrace=enabled"
+        "-Db_sanitize=address,undefined -Db_lundef=false -Dbacktrace=enabled -Dbuildtype=debug"
         if debug
         else ""
     )
