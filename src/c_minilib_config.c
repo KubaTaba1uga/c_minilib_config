@@ -7,10 +7,10 @@
 
 #include "c_minilib_config.h"
 #include "c_minilib_error.h"
-#include "cmc_common.h"
-#include "cmc_env_parser/cmc_env_parser.h"
-#include "cmc_error.h"
-#include "cmc_parse_interface.h"
+#include "cmc_parse_interface/cmc_env_parser/cmc_env_parser.h"
+#include "cmc_parse_interface/cmc_parse_interface.h"
+#include "utils/cmc_common.h"
+#include "utils/cmc_error.h"
 
 static struct cmc_ConfigParseInterface parsers[cmc_ConfigParseFormat_MAX];
 static int32_t parsers_length = 0;
@@ -112,7 +112,7 @@ error_settings_cleanup:
   free(local_config->settings);
 error_config_cleanup:
   free(local_config);
-error_our:
+error_out:
   return err;
 };
 
@@ -121,9 +121,9 @@ void cmc_config_destroy(struct cmc_Config **config) {
     return;
   }
 
-  free(*config->settings->supported_paths);
-  free(*config->settings->name);
-  free(*config->settings);
+  free((*config)->settings->supported_paths);
+  free((*config)->settings->name);
+  free((*config)->settings);
   free(*config);
   *config = NULL;
 };
@@ -131,7 +131,6 @@ void cmc_config_destroy(struct cmc_Config **config) {
 cmc_error_t cmc_config_add_field(const struct cmc_ConfigField *field,
                                  struct cmc_Config *config);
 cmc_error_t cmc_config_parse(struct cmc_Config *config);
-cmc_error_t cmc_config_destroy(struct cmc_Config *config);
 cmc_error_t cmc_config_get_str(const char *name,
                                const struct cmc_Config *config, size_t n,
                                char buffer[n]);
