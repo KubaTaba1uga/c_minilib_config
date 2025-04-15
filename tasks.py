@@ -14,6 +14,7 @@ from invoke import task
 C_COMPILER = "clang-19"
 C_FORMATTER = "clang-format-19"
 C_LINTTER = "clang-tidy-19"
+C_LINKER = "lld-19"
 
 ######################################################################################
 #                             Public API                                             #
@@ -38,6 +39,7 @@ def install(c):
         C_COMPILER: C_COMPILER,
         C_FORMATTER: C_FORMATTER,
         C_LINTTER: C_LINTTER,
+        C_LINKER: C_LINKER,
     }
     _pr_info("Installing dependencies...")
 
@@ -52,13 +54,22 @@ def install(c):
 
 
 @task
-def build(c):
+def build(c, debug=False):
     _pr_info("Building...")
 
     _run_command(c, f"mkdir -p {BUILD_PATH}")
-    _run_command(c, f"CC={C_COMPILER} meson setup {BUILD_PATH}")
-    _run_command(c, f"meson compile -C {BUILD_PATH}")
 
+    sanitize_option = (
+        "-Db_sanitize=address,undefined -Db_lundef=false -Dbacktrace=enabled"
+        if debug
+        else ""
+    )
+    _run_command(
+        c,
+        f"CC={C_COMPILER} CC_LD={C_LINKER} meson setup {BUILD_PATH} {sanitize_option} --reconfigure",
+    )
+
+    _run_command(c, f"meson compile -v -C {BUILD_PATH}")
     _pr_info("Build done")
 
 

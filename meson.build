@@ -14,16 +14,21 @@ project('c_minilib_config', 'c',
 # ******************************************************************************
 # *    App
 # ******************************************************************************
-# Enable sanitizers
-# add_project_arguments('-fsanitize=address,undefined', language: 'c')
+if get_option('backtrace').enabled()
+  add_project_arguments('-DCME_ENABLE_BACKTRACE', language: 'c')
+endif
 
 # Enable posix functions
 add_project_arguments('-D_POSIX_C_SOURCE=200809L', language: 'c')
 
 subdir('src')
 
-main = library('cmx_config', sources, include_directories: ['include', 'src'])
-
+c_minilib_error_subproject = subproject('c_minilib_error')
+cmx_config_lib = library('cmx_config',
+                         sources,
+			 include_directories: ['include', 'src'],
+                         dependencies: [c_minilib_error_subproject.get_variable('cmx_error_dep')],
+)
 
 
 # ******************************************************************************

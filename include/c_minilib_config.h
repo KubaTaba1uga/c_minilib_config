@@ -1,6 +1,7 @@
 #ifndef C_MINILIB_CONFIG_H
 #define C_MINILIB_CONFIG_H
 
+#include <c_minilib_error.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -49,29 +50,20 @@ struct cmc_Config {
   struct cmc_ConfigField *fields;
 };
 
-struct cmc_Error {
-  int code;
-  char *msg;
-  char *source_file;
-  char *source_func;
-  int source_line;
-};
+typedef struct cmx_Error *cmc_error_t;
 
-struct cmc_ConfigOps {
-  struct cmc_Error *(*lib_init)(void);
-  struct cmc_Error *(*config_create)(const struct cmc_ConfigSettings *settings,
-                                     struct cmc_Config *config);
-  struct cmc_Error *(*config_add_field)(const struct cmc_ConfigField *field,
-                                        struct cmc_Config *config);
-  struct cmc_Error *(*config_parse)(struct cmc_Config *config);
-  struct cmc_Error *(*config_destroy)(struct cmc_Config *config);
-  struct cmc_Error *(*config_get_str)(const char *name,
-                                      const struct cmc_Config *config, size_t n,
-                                      char buffer[n]);
-  struct cmc_Error *(*config_get_int)(const char *name,
-                                      const struct cmc_Config *config,
-                                      int *output);
-  void (*error_destroy)(struct cmc_Error *error);
-};
+cmc_error_t cmc_lib_init(void);
+cmc_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,
+                              struct cmc_Config *config);
+cmc_error_t cmc_config_add_field(const struct cmc_ConfigField *field,
+                                 struct cmc_Config *config);
+cmc_error_t cmc_config_parse(struct cmc_Config *config);
+cmc_error_t cmc_config_destroy(struct cmc_Config *config);
+cmc_error_t cmc_config_get_str(const char *name,
+                               const struct cmc_Config *config, size_t n,
+                               char buffer[n]);
+cmc_error_t cmc_config_get_int(const char *name,
+                               const struct cmc_Config *config, int *output);
+void cmc_error_destroy(cmc_error_t *error);
 
 #endif // C_MINILIB_CONFIG_H
