@@ -67,7 +67,7 @@ cmc_error_t cmc_config_get_str(const char *name,
 cmc_error_t cmc_config_get_int(const char *name,
                                const struct cmc_Config *config, int *output);
 
-inline void cmc_error_destroy(cmc_error_t *error) {
+static inline void cmc_error_destroy(cmc_error_t *error) {
   cme_error_destroy((struct cme_Error *)*error);
 }
 
