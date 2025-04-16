@@ -66,6 +66,9 @@ cmc_error_t cmc_config_get_str(const char *name,
                                char buffer[n]);
 cmc_error_t cmc_config_get_int(const char *name,
                                const struct cmc_Config *config, int *output);
-void cmc_error_destroy(cmc_error_t *error);
+
+inline void cmc_error_destroy(cmc_error_t *error) {
+  cme_error_destroy((struct cme_Error *)*error);
+}
 
 #endif // C_MINILIB_CONFIG_H

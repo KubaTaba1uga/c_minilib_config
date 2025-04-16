@@ -62,7 +62,7 @@ def build(c, debug=False):
     sanitize_option = (
         "-Db_sanitize=address,undefined -Db_lundef=false -Dbacktrace=enabled -Dbuildtype=debug"
         if debug
-        else ""
+        else "-Dbuildtype=release"
     )
     _run_command(
         c,

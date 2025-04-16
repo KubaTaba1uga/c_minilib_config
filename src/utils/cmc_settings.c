@@ -7,19 +7,17 @@
 #include "utils/cmc_error.h"
 
 cmc_error_t cmc_settings_create(const uint32_t paths_length,
-                                const char *supported_paths[paths_length],
-                                const char *name, const void *log_func,
+                                const char **supported_paths, const char *name,
+                                const void *log_func,
                                 struct cmc_ConfigSettings **settings) {
   struct cmc_ConfigSettings *local_settings;
   cmc_error_t err;
 
-  // Validate args
   if (!settings) {
     err = cmc_errorf(EINVAL, "`settings=%p` cannot be NULL\n", settings);
     goto error_out;
   }
 
-  // Create and fill settings
   local_settings = malloc(sizeof(struct cmc_ConfigSettings));
   if (!local_settings) {
     err =
@@ -60,9 +58,9 @@ cmc_error_t cmc_settings_create(const uint32_t paths_length,
                        i);
       goto error_settings_paths_iter_cleanup;
     }
-
-    local_settings->paths_length = i;
   }
+
+  local_settings->paths_length = local_paths_length;
 
   if (!name) {
     name = "config";
@@ -99,13 +97,13 @@ void cmc_settings_destroy(struct cmc_ConfigSettings **settings) {
 
   free((*settings)->name);
 
-  while ((*settings)->paths_length > 0) {
-    free((*settings)->supported_paths[(*settings)->paths_length--]);
+  while ((*settings)->paths_length-- > 0) {
+    free((*settings)->supported_paths[(*settings)->paths_length]);
   }
 
   free((*settings)->supported_paths);
 
-  free((*settings));
+  free(*settings);
 
   *settings = NULL;
 }
