@@ -16,6 +16,8 @@ enum cmc_ConfigParseFormat {
 };
 
 struct cmc_ConfigParseInterface {
+  const char id;
+  cmc_ConfigParserData data;
   // Initialize parser instance
   cmc_error_t (*init)(cmc_ConfigParserData *);
   // Decide if parser can parse a file

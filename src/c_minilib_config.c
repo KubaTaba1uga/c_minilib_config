@@ -116,7 +116,47 @@ error_out:
   return err;
 };
 
-/* cmc_error_t cmc_config_parse(struct cmc_Config *config); */
+cmc_error_t cmc_config_parse(struct cmc_Config *config) {
+  struct cmc_ConfigParseInterface *parser;
+  cmc_error_t err;
+
+  if (!config) {
+    err = cmc_errorf(EINVAL, "`config=%p` cannot be NULL\n", config);
+    goto error_out;
+  }
+
+  for (int32_t i = 0; i < parsers_length; i++) {
+    parser = &parsers[i];
+
+    err = parser->init(parser->data);
+    if (err) {
+      goto error_out;
+    }
+
+    for (int32_t j = 0; j < config->settings->paths_length; j++) {
+      char dir_path[255];
+      bool is_parser_format;
+      sprintf(dir_path, "%s/%s", config->settings->supported_paths[j],
+              config->settings->name);
+
+      err = parser->is_format(strlen(dir_path), dir_path, &is_parser_format);
+      if (err) {
+        return err;
+      }
+
+      // To-do: open and read files and pass to prser
+      /* if (is_parser_format) { */
+      /*   parser->parse */
+      /* } */
+    }
+
+    return NULL;
+  }
+
+  return NULL;
+error_out:
+  return err;
+};
 /* cmc_error_t cmc_config_get_str(const char *name, */
 /*                                const struct cmc_Config *config, size_t n, */
 /*                                char buffer[n]); */
