@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <unity.h>
 
 #include "c_minilib_config.h"
@@ -51,19 +52,28 @@ void test_cmc_config_add_field_null_args(void) {
   TEST_ASSERT_NOT_NULL(err);
 }
 
+#define FIELD_NAME_MAX 32
+#define TEST_LOOPS_MAX 10
 void test_cmc_config_add_valid_field(void) {
   err = cmc_config_create(NULL, &config);
   TEST_ASSERT_NULL(err);
 
-  err = cmc_config_add_field(
-      &(struct cmc_ConfigField){.name = "server_host",
-                                .type = cmc_ConfigFieldTypeEnum_STRING,
-                                .default_value = "localhost",
-                                .optional = true,
-                                .next_field = NULL},
-      config);
+  for (int i = 0; i < TEST_LOOPS_MAX; i++) {
+    char name[FIELD_NAME_MAX];
+    sprintf(name, "server_host_%d", i);
 
-  TEST_ASSERT_NULL(err);
-  TEST_ASSERT_NOT_NULL(config->fields);
-  TEST_ASSERT_EQUAL_STRING("server_host", config->fields->name);
+    err = cmc_config_add_field(
+        &(struct cmc_ConfigField){.name = name,
+                                  .type = cmc_ConfigFieldTypeEnum_STRING,
+                                  .default_value = "localhost",
+                                  .optional = true,
+                                  .next_field = NULL},
+        config);
+
+    TEST_ASSERT_NULL(err);
+    TEST_ASSERT_NOT_NULL(config->fields);
+    TEST_ASSERT_EQUAL_STRING(name, config->fields->name);
+    TEST_ASSERT_EQUAL_STRING("localhost", config->fields->default_value);
+    TEST_ASSERT_TRUE(config->fields->optional);
+  }
 }

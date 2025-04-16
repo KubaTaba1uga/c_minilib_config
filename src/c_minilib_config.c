@@ -1,9 +1,9 @@
 #include <errno.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdio.h>
 
 #include <c_minilib_config.h>
 #include <c_minilib_error.h>
@@ -78,20 +78,12 @@ void cmc_config_destroy(struct cmc_Config **config) {
 
   cmc_settings_destroy(&(*config)->settings);
 
-
-    /* free every config field */
-    struct cmc_ConfigField *field = (*config)->fields;
-    while (field) {
-        struct cmc_ConfigField *next = field->next_field;
-        cmc_field_destroy(&field);   /* this NULLs (field) */
-        field = next;
-    }
-
-  /* while ((*config)->fields) { */
-  /*   struct cmc_ConfigField *next_field = (*config)->fields->next_field; */
-  /*   cmc_field_destroy(&(*config)->fields); */
-  /*   (*config)->fields = next_field; */
-  /* } */
+  struct cmc_ConfigField *field = (*config)->fields;
+  while (field) {
+    struct cmc_ConfigField *next = field->next_field;
+    cmc_field_destroy(&field); /* this NULLs (field) */
+    field = next;
+  }
 
   free(*config);
 
@@ -114,7 +106,7 @@ cmc_error_t cmc_config_add_field(const struct cmc_ConfigField *field,
   if (err) {
     goto error_out;
   }
-  
+
   local_field->next_field = config->fields;
   config->fields = local_field;
 

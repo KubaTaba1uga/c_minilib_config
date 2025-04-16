@@ -1,9 +1,26 @@
 #include <errno.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "c_minilib_config.h"
 #include "utils/cmc_field.h"
+
+static void add_default_value(struct cmc_ConfigField *field,
+                              const void *default_value) {
+  int32_t *default_int;
+  switch (field->type) {
+  case cmc_ConfigFieldTypeEnum_STRING:
+    field->default_value = strdup(default_value);
+    break;
+  case cmc_ConfigFieldTypeEnum_INT:
+    default_int = malloc(sizeof(int32_t));
+    *default_int = *(int32_t *)default_value;
+    field->default_value = default_int;
+    break;
+  default:;
+  }
+}
 
 cmc_error_t cmc_field_create(const char *name,
                              const enum cmc_ConfigFieldTypeEnum type,
@@ -46,14 +63,15 @@ cmc_error_t cmc_field_create(const char *name,
     goto error_field_cleanup;
   }
 
-  local_field->default_value = default_value;
   local_field->optional = optional;
   local_field->next_field = NULL;
   local_field->value = NULL;
   local_field->type = type;
 
+  add_default_value(local_field, default_value);
+
   *field = local_field;
-  
+
   return NULL;
 
 error_field_cleanup:
@@ -67,6 +85,7 @@ void cmc_field_destroy(struct cmc_ConfigField **field) {
     return;
   }
 
+  free((*field)->default_value);
   free((*field)->name);
   free(*field);
   *field = NULL;

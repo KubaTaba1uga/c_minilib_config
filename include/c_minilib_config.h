@@ -48,7 +48,7 @@ struct cmc_ConfigField {
   char *name;
   void *value;
   bool optional;
-  const void *default_value;
+  void *default_value;
   enum cmc_ConfigFieldTypeEnum type;
   void *next_field;
 };
