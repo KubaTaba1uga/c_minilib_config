@@ -1,16 +1,18 @@
-#include <asm-generic/errno.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
 
-#include "c_minilib_config.h"
-#include "c_minilib_error.h"
+#include <c_minilib_config.h>
+#include <c_minilib_error.h>
+
 #include "cmc_parse_interface/cmc_env_parser/cmc_env_parser.h"
 #include "cmc_parse_interface/cmc_parse_interface.h"
 #include "utils/cmc_common.h"
 #include "utils/cmc_error.h"
+#include "utils/cmc_field.h"
 #include "utils/cmc_settings.h"
 
 static struct cmc_ConfigParseInterface parsers[cmc_ConfigParseFormat_MAX];
@@ -37,7 +39,7 @@ cmc_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,
   cmc_error_t err;
 
   if (!config) {
-    err = cmc_errorf(EINVAL, "`config=%p` cannot be NULL\n", settings, config);
+    err = cmc_errorf(EINVAL, "`config=%p` cannot be NULL\n", config);
     goto error_out;
   }
 
@@ -75,13 +77,53 @@ void cmc_config_destroy(struct cmc_Config **config) {
   }
 
   cmc_settings_destroy(&(*config)->settings);
+
+
+    /* free every config field */
+    struct cmc_ConfigField *field = (*config)->fields;
+    while (field) {
+        struct cmc_ConfigField *next = field->next_field;
+        cmc_field_destroy(&field);   /* this NULLs (field) */
+        field = next;
+    }
+
+  /* while ((*config)->fields) { */
+  /*   struct cmc_ConfigField *next_field = (*config)->fields->next_field; */
+  /*   cmc_field_destroy(&(*config)->fields); */
+  /*   (*config)->fields = next_field; */
+  /* } */
+
   free(*config);
 
   *config = NULL;
 };
 
-/* cmc_error_t cmc_config_add_field(const struct cmc_ConfigField *field, */
-/*                                  struct cmc_Config *config); */
+cmc_error_t cmc_config_add_field(const struct cmc_ConfigField *field,
+                                 struct cmc_Config *config) {
+  struct cmc_ConfigField *local_field;
+  cmc_error_t err;
+
+  if (!field || !config) {
+    err = cmc_errorf(EINVAL, "`field=%p` and `config=%p` cannot be NULL\n",
+                     field, config);
+    goto error_out;
+  }
+
+  err = cmc_field_create(field->name, field->type, field->default_value,
+                         field->optional, &local_field);
+  if (err) {
+    goto error_out;
+  }
+  
+  local_field->next_field = config->fields;
+  config->fields = local_field;
+
+  return NULL;
+
+error_out:
+  return err;
+};
+
 /* cmc_error_t cmc_config_parse(struct cmc_Config *config); */
 /* cmc_error_t cmc_config_get_str(const char *name, */
 /*                                const struct cmc_Config *config, size_t n, */

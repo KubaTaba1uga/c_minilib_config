@@ -37,19 +37,25 @@ struct cmc_ConfigSettings {
   void (*log_func)(int log_level, char *msg);
 };
 
-enum cmc_ConfigFieldTypeEnum { STRING, INT };
+enum cmc_ConfigFieldTypeEnum {
+  cmc_ConfigFieldTypeEnum_NONE,
+  cmc_ConfigFieldTypeEnum_STRING,
+  cmc_ConfigFieldTypeEnum_INT,
+  cmc_ConfigFieldTypeEnum_MAX,
+};
 
 struct cmc_ConfigField {
   char *name;
-  enum cmc_ConfigFieldTypeEnum type;
   void *value;
-  void *default_value;
   bool optional;
+  const void *default_value;
+  enum cmc_ConfigFieldTypeEnum type;
+  void *next_field;
 };
 
 struct cmc_Config {
-  struct cmc_ConfigSettings *settings;
   struct cmc_ConfigField *fields;
+  struct cmc_ConfigSettings *settings;
 };
 
 typedef struct cmx_Error *cmc_error_t;

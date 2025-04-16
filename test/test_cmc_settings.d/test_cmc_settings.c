@@ -14,6 +14,7 @@ void setUp(void) {
 }
 
 void tearDown(void) {
+  
   cmc_settings_destroy(&settings);
   cmc_error_destroy(&err);
 }
