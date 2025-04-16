@@ -49,14 +49,16 @@ cmc_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,
 
   if (!settings) {
     err = cmc_settings_create(0, NULL, NULL, NULL, &local_config->settings);
-    if (err) {
-      goto error_config_cleanup;
-    }
+  } else {
+    err = cmc_settings_create(
+        settings->paths_length, (const char **)settings->supported_paths,
+        settings->name, settings->log_func, &local_config->settings);
+  }
+  if (err) {
+    goto error_config_cleanup;
   }
 
-  local_config->settings = (struct cmc_ConfigSettings *)settings;
   local_config->fields = NULL;
-
   *config = local_config;
 
   return NULL;

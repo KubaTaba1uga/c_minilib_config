@@ -1,2 +1,2 @@
 WarningsAsErrors: ''
-Checks: 'llvm-*,clang-analyzer-*,performance-*,bugprone-*,readability-*,-llvm-header-guard'
+Checks: 'llvm-*,clang-analyzer-*,performance-*,bugprone-*,readability-*,-llvm-header-guard,-readability-avoid-const-params-in-decls'

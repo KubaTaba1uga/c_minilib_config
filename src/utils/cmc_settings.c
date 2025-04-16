@@ -35,11 +35,10 @@ cmc_error_t cmc_settings_create(const uint32_t paths_length,
   local_settings->supported_paths = NULL;
 
   for (uint32_t i = 0; i < local_paths_length; i++) {
-    // We need to copy ptr to avoid possible memory leak on realloc error
-    char **local_supported_paths = local_settings->supported_paths;
+    char **local_supported_paths;
 
-    local_supported_paths =
-        realloc(local_settings->supported_paths, sizeof(char *) * (i + 1));
+    local_supported_paths = (char **)realloc(
+        (void *)local_settings->supported_paths, sizeof(char *) * (i + 1));
     if (!local_supported_paths) {
       err = cmc_errorf(ENOMEM,
                        "Unable to allocate memory for `local_supported_paths`, "
@@ -80,11 +79,11 @@ cmc_error_t cmc_settings_create(const uint32_t paths_length,
   return NULL;
 
 error_settings_paths_iter_cleanup:
-  while (local_settings->paths_length > 0) {
-    free(local_settings->supported_paths[local_settings->paths_length--]);
+  while (local_settings->paths_length-- > 0) {
+    free(local_settings->supported_paths[local_settings->paths_length]);
   }
 error_settings_paths_cleanup:
-  free(local_settings->supported_paths);
+  free((void *)local_settings->supported_paths);
   free(local_settings);
 error_out:
   return err;
@@ -101,7 +100,7 @@ void cmc_settings_destroy(struct cmc_ConfigSettings **settings) {
     free((*settings)->supported_paths[(*settings)->paths_length]);
   }
 
-  free((*settings)->supported_paths);
+  free((void *)(*settings)->supported_paths);
 
   free(*settings);
 
