@@ -19,10 +19,10 @@ struct cmc_ConfigParseInterface {
   const char *id;
   cmc_ConfigParserData data;
   cmc_error_t (*create)(cmc_ConfigParserData *);
-  // Decide if parser can parse a file
+  // Decide if parser can parse a file based on it's path
   cmc_error_t (*is_format)(const size_t n, const char path[n], bool *result);
-  // Parse a file loaded into buffer
-  cmc_error_t (*parse)(const size_t n, const char buffer[n],
+  // Parse a file based on it's path
+  cmc_error_t (*parse)(const size_t n, const char path[n],
                        const cmc_ConfigParserData data,
                        struct cmc_Config *config);
   // Destroy parser instance

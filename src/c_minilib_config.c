@@ -126,29 +126,57 @@ cmc_error_t cmc_config_parse(struct cmc_Config *config) {
     goto error_out;
   }
 
+  CMC_LOG(config->settings, cmc_LogLevelEnum_DEBUG,
+          "Starting configuration file parsing");
+
+  bool matched_parser = false;
+
   CMC_FOREACH_PTR(parser, parsers, parsers_length) {
     err = parser->create(parser->data);
     if (err) {
       goto error_out;
     }
 
-    for (int32_t j = 0; j < config->settings->paths_length; j++) {
-      char *dir_path = config->settings->supported_paths[j];
+    /* Search supported paths to find matching configuration file. */
+    /* Once we have first match search is stopped and parsing occurs. */
+    char *dir_path;
+    CMC_FOREACH(dir_path, config->settings->supported_paths,
+                config->settings->paths_length) {
       CMC_JOIN_PATH_STACK(file_path, dir_path, config->settings->name);
-      // 1 for `/` and ` for null byte
-      bool is_parser_format;
 
-      err = parser->is_format(strlen(file_path), file_path, &is_parser_format);
+      CMC_LOG(config->settings, cmc_LogLevelEnum_DEBUG,
+              "Checking %s configuration file", file_path);
+
+      err = parser->is_format(sizeof(file_path) / sizeof(char), file_path,
+                              &matched_parser);
       if (err) {
         return err;
       }
 
-      if (!is_parser_format) {
+      if (!matched_parser) {
         continue;
       }
 
       CMC_LOG(config->settings, cmc_LogLevelEnum_DEBUG,
               "Using %s configuration file", file_path);
+
+      err = parser->parse(sizeof(file_path) / sizeof(char), file_path,
+                          parser->data, config);
+      if (err) {
+        parser->destroy(parser->data);
+        goto error_out;
+      }
+
+      // TO-DO: print all configuration fields
+      break;
+    }
+
+    parser->destroy(parser->data);
+
+    if (matched_parser) {
+      CMC_LOG(config->settings, cmc_LogLevelEnum_DEBUG,
+              "Finished configuration file parsing");
+      break;
     }
   }
 
