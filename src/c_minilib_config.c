@@ -14,6 +14,7 @@
 #include "utils/cmc_error.h"
 #include "utils/cmc_field.h"
 #include "utils/cmc_settings.h"
+#include "utils/cmc_string.h"
 
 static struct cmc_ConfigParseInterface parsers[cmc_ConfigParseFormat_MAX];
 static int32_t parsers_length = 0;
@@ -125,8 +126,7 @@ cmc_error_t cmc_config_parse(struct cmc_Config *config) {
     goto error_out;
   }
 
-  for (int32_t i = 0; i < parsers_length; i++) {
-    parser = &parsers[i];
+  CMC_FOREACH(parser, parsers, parsers_length) {
 
     err = parser->init(parser->data);
     if (err) {
@@ -134,23 +134,20 @@ cmc_error_t cmc_config_parse(struct cmc_Config *config) {
     }
 
     for (int32_t j = 0; j < config->settings->paths_length; j++) {
-      char dir_path[255];
+      char *dir_path = config->settings->supported_paths[j];
+      CMC_JOIN_PATH_STACK(file_path, dir_path, config->settings->name);
+      // 1 for `/` and ` for null byte
       bool is_parser_format;
-      sprintf(dir_path, "%s/%s", config->settings->supported_paths[j],
-              config->settings->name);
 
-      err = parser->is_format(strlen(dir_path), dir_path, &is_parser_format);
+      err = parser->is_format(strlen(file_path), file_path, &is_parser_format);
       if (err) {
         return err;
       }
 
-      // To-do: open and read files and pass to prser
-      /* if (is_parser_format) { */
-      /*   parser->parse */
-      /* } */
+      if (!is_parser_format) {
+        continue;
+      }
     }
-
-    return NULL;
   }
 
   return NULL;

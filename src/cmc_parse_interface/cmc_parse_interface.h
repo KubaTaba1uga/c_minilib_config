@@ -16,17 +16,17 @@ enum cmc_ConfigParseFormat {
 };
 
 struct cmc_ConfigParseInterface {
-  const char id;
+  const char *id;
   cmc_ConfigParserData data;
-  // Initialize parser instance
-  cmc_error_t (*init)(cmc_ConfigParserData *);
+  cmc_error_t (*create)(cmc_ConfigParserData *);
   // Decide if parser can parse a file
   cmc_error_t (*is_format)(const size_t n, const char path[n], bool *result);
   // Parse a file loaded into buffer
   cmc_error_t (*parse)(const size_t n, const char buffer[n],
+                       const cmc_ConfigParserData data,
                        struct cmc_Config *config);
   // Destroy parser instance
-  cmc_error_t (*destroy)(cmc_ConfigParserData *);
+  void (*destroy)(cmc_ConfigParserData *);
 };
 
 #endif // C_MINILIB_CONFIG_PARSE_INTERFACE_H
