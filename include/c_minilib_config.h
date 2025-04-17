@@ -30,11 +30,18 @@
     };
 */
 
+enum cmc_LogLevelEnum {
+  cmc_LogLevelEnum_ERROR,
+  cmc_LogLevelEnum_WARNING,
+  cmc_LogLevelEnum_INFO,
+  cmc_LogLevelEnum_DEBUG,
+};
+
 struct cmc_ConfigSettings {
   char **supported_paths;
   uint32_t paths_length;
   char *name;
-  void (*log_func)(int log_level, char *msg);
+  void (*log_func)(enum cmc_LogLevelEnum log_level, char *msg);
 };
 
 enum cmc_ConfigFieldTypeEnum {

@@ -77,7 +77,7 @@ def build(c, debug=False):
 def test(c):
     _pr_info("Testing...")
 
-    _run_command(c, f"meson test -C {BUILD_PATH}")
+    _run_command(c, f"meson test -C {BUILD_PATH} --verbose")
 
     _pr_info("Testing done")
 
@@ -144,9 +144,11 @@ def clean(c, extra=""):
         "build",
         ".cache",
         "**/*~",
-        "**/#*",
         "*~",
-        "#*",
+        "**/*#*",
+        "*#*",
+        "**/.#*",
+        ".#*",
     ]
 
     if extra:
@@ -156,12 +158,12 @@ def clean(c, extra=""):
         _pr_info(f"Removing files matching pattern '{pattern}'")
 
         for path in glob.glob(pattern, recursive=True):
-            if os.path.isfile(path):
-                os.remove(path)
-                _pr_debug(f"Removed file {path}")
-            elif os.path.isdir(path):
+            if os.path.isdir(path):
                 shutil.rmtree(path)
                 _pr_debug(f"Removed directory {path}")
+            else:
+                os.remove(path)
+                _pr_debug(f"Removed file {path}")
 
     _pr_info("Clean up completed.")
 

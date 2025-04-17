@@ -126,9 +126,8 @@ cmc_error_t cmc_config_parse(struct cmc_Config *config) {
     goto error_out;
   }
 
-  CMC_FOREACH(parser, parsers, parsers_length) {
-
-    err = parser->init(parser->data);
+  CMC_FOREACH_PTR(parser, parsers, parsers_length) {
+    err = parser->create(parser->data);
     if (err) {
       goto error_out;
     }
@@ -147,6 +146,9 @@ cmc_error_t cmc_config_parse(struct cmc_Config *config) {
       if (!is_parser_format) {
         continue;
       }
+
+      CMC_LOG(config->settings, cmc_LogLevelEnum_DEBUG,
+              "Using %s configuration file", file_path);
     }
   }
 
