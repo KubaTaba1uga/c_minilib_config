@@ -112,6 +112,10 @@ _cmc_env_parser_parse_single_line(char *line, struct cmc_Config *config) {
       strncpy(env_field_value, delimeter_ptr + 1, value_len);
       env_field_value[value_len] = 0;
 
+      if (env_field_value[value_len - 1] == '\n') {
+        env_field_value[value_len - 1] = 0;
+      }
+
       switch (field->type) {
       case cmc_ConfigFieldTypeEnum_STRING:
         err = cmc_field_add_value_str(field, env_field_value);

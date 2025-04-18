@@ -52,7 +52,6 @@ void test_is_format_for_nonexistent_file(void) {
 }
 
 void test_parse_valid_env_file(void) {
-  // Define config settings with correct CONFIG_PATH and default name "config"
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
                                        (char *[]){(char *)CONFIG_PATH},
@@ -62,28 +61,46 @@ void test_parse_valid_env_file(void) {
       &config);
   TEST_ASSERT_NULL(err);
 
-  // Register string field (name must match lowercased env key)
-  err = cmc_field_create("cmc_str_config", cmc_ConfigFieldTypeEnum_STRING,
-                         "default_value", true, &field_str);
-  TEST_ASSERT_NULL(err);
-  err = cmc_config_add_field(field_str, config);
-  TEST_ASSERT_NULL(err);
-
-  // Register int field (same rule)
-  int default_val = 0;
-  err = cmc_field_create("cmc_int_config", cmc_ConfigFieldTypeEnum_INT,
-                         &default_val, true, &field_int);
-  TEST_ASSERT_NULL(err);
-  err = cmc_config_add_field(field_int, config);
+  err = cmc_config_add_field(
+      &(struct cmc_ConfigField){.name = "cmc_str_config",
+                                .type = cmc_ConfigFieldTypeEnum_STRING,
+                                .default_value = "default_value",
+                                .optional = true,
+                                .next_field = NULL},
+      config);
   TEST_ASSERT_NULL(err);
 
-  // Parse the .env file
+  static int default_val = 0;
+  err = cmc_config_add_field(
+      &(struct cmc_ConfigField){.name = "cmc_int_config",
+                                .type = cmc_ConfigFieldTypeEnum_INT,
+                                .default_value = &default_val,
+                                .optional = true,
+                                .next_field = NULL},
+      config);
+  TEST_ASSERT_NULL(err);
+
+  // Parse .env file
   err = parser.parse(strlen(CONFIG_PATH), CONFIG_PATH, NULL, config);
   TEST_ASSERT_NULL(err);
 
-  // Assert values parsed correctly
-  TEST_ASSERT_NOT_NULL(field_str->value);
-  TEST_ASSERT_NOT_NULL(field_int->value);
-  TEST_ASSERT_EQUAL_STRING("whatever", (char *)field_str->value);
-  TEST_ASSERT_EQUAL_INT(1, *(int *)field_int->value);
+  // Find and assert both fields in config->fields
+  struct cmc_ConfigField *f_str = NULL;
+  struct cmc_ConfigField *f_int = NULL;
+
+  for (struct cmc_ConfigField *f = config->fields; f; f = f->next_field) {
+    if (strcmp(f->name, "cmc_str_config") == 0) {
+      f_str = f;
+    } else if (strcmp(f->name, "cmc_int_config") == 0) {
+      f_int = f;
+    }
+  }
+
+  TEST_ASSERT_NOT_NULL(f_str);
+  TEST_ASSERT_NOT_NULL(f_str->value);
+  TEST_ASSERT_EQUAL_STRING("whatever", (char *)f_str->value);
+
+  TEST_ASSERT_NOT_NULL(f_int);
+  TEST_ASSERT_NOT_NULL(f_int->value);
+  TEST_ASSERT_EQUAL_INT(1, *(int *)f_int->value);
 }
