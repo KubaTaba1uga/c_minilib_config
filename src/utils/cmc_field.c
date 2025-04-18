@@ -6,21 +6,13 @@
 #include "c_minilib_config.h"
 #include "utils/cmc_field.h"
 
-static void add_default_value(struct cmc_ConfigField *field,
-                              const void *default_value) {
-  int32_t *default_int;
-  switch (field->type) {
-  case cmc_ConfigFieldTypeEnum_STRING:
-    field->default_value = strdup(default_value);
-    break;
-  case cmc_ConfigFieldTypeEnum_INT:
-    default_int = malloc(sizeof(int32_t));
-    *default_int = *(int32_t *)default_value;
-    field->default_value = default_int;
-    break;
-  default:;
-  }
-}
+static inline cmc_error_t cmc_alloc_field_value_str(const char *value,
+                                                    void **field_value);
+static inline cmc_error_t cmc_alloc_field_value_int(const int32_t value,
+                                                    void **field_value);
+static inline cmc_error_t
+cmc_field_add_default_value(struct cmc_ConfigField *field,
+                            const void *default_value);
 
 cmc_error_t cmc_field_create(const char *name,
                              const enum cmc_ConfigFieldTypeEnum type,
@@ -68,12 +60,17 @@ cmc_error_t cmc_field_create(const char *name,
   local_field->value = NULL;
   local_field->type = type;
 
-  add_default_value(local_field, default_value);
+  err = cmc_field_add_default_value(local_field, default_value);
+  if (err) {
+    goto error_field_name_cleanup;
+  }
 
   *field = local_field;
 
   return NULL;
 
+error_field_name_cleanup:
+  free(local_field->name);
 error_field_cleanup:
   free(local_field);
 error_out:
@@ -90,3 +87,101 @@ void cmc_field_destroy(struct cmc_ConfigField **field) {
   free(*field);
   *field = NULL;
 };
+
+cmc_error_t cmc_field_add_value_str(struct cmc_ConfigField *field,
+                                    const char *value) {
+  cmc_error_t err;
+  if (!field || !value) {
+    err = cmc_errorf(EINVAL, "`field=%p` and `value=%p` cannot be NULL\n",
+                     field, value);
+    goto error_out;
+  }
+
+  if (field->value) {
+    err = cmc_errorf(
+        EINVAL,
+        "`field->value=%p` is already populated, cannot add `value=%p`\n",
+        field->value, value);
+    goto error_out;
+  }
+
+  err = cmc_alloc_field_value_str(value, &field->value);
+  if (err) {
+    goto error_out;
+  }
+
+  return NULL;
+
+error_out:
+  return err;
+}
+
+cmc_error_t cmc_field_add_value_int(struct cmc_ConfigField *field,
+                                    const int32_t value) {
+  cmc_error_t err;
+  if (!field) {
+    err = cmc_errorf(EINVAL, "`field=%p` cannot be NULL\n", field, value);
+    goto error_out;
+  }
+
+  if (field->value) {
+    err = cmc_errorf(
+        EINVAL,
+        "`field->value=%p` is already populated, cannot add `value=%p`\n",
+        field->value, value);
+    goto error_out;
+  }
+
+  err = cmc_alloc_field_value_int(value, &field->value);
+  if (err) {
+    goto error_out;
+  }
+
+  return NULL;
+
+error_out:
+  return err;
+}
+
+static inline cmc_error_t
+cmc_field_add_default_value(struct cmc_ConfigField *field,
+                            const void *default_value) {
+  cmc_error_t err = NULL;
+  switch (field->type) {
+  case cmc_ConfigFieldTypeEnum_STRING:
+    err = cmc_alloc_field_value_str(default_value, &field->default_value);
+    break;
+  case cmc_ConfigFieldTypeEnum_INT:
+    err = cmc_alloc_field_value_int(*(int32_t *)default_value,
+                                    &field->default_value);
+    break;
+  default:
+    err = cmc_errorf(ENOMEM, "Unsupported value for `field->type=%d`\n",
+                     field->type);
+  }
+
+  return err;
+}
+
+static inline cmc_error_t cmc_alloc_field_value_str(const char *value,
+                                                    void **field_value) {
+  *field_value = strdup(value);
+  if (!*field_value) {
+    return cmc_errorf(ENOMEM, "Unable to allocate memory for `field->value`\n");
+  }
+
+  return NULL;
+}
+
+static inline cmc_error_t cmc_alloc_field_value_int(const int32_t value,
+                                                    void **field_value) {
+  int32_t *local_int = malloc(sizeof(int32_t));
+  if (!local_int) {
+    return cmc_errorf(ENOMEM, "Unable to allocate memory for `field->value`\n");
+  }
+
+  *local_int = value;
+  *field_value = local_int;
+
+  return NULL;
+}
