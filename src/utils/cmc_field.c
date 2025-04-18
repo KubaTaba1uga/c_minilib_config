@@ -82,6 +82,7 @@ void cmc_field_destroy(struct cmc_ConfigField **field) {
     return;
   }
 
+  free((*field)->value);
   free((*field)->default_value);
   free((*field)->name);
   free(*field);
