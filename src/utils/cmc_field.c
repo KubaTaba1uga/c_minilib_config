@@ -1,4 +1,3 @@
-#include <asm-generic/errno.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -28,15 +27,18 @@ cmc_error_t cmc_field_create(const char *name,
     goto error_out;
   }
 
-  if (type <= cmc_ConfigFieldTypeEnum_NONE ||
-      type >= cmc_ConfigFieldTypeEnum_MAX) {
+  switch (type) {
+  case cmc_ConfigFieldTypeEnum_INT:
+  case cmc_ConfigFieldTypeEnum_STRING:
+    if (!optional) {
+      default_value = NULL;
+    }
+    break;
+  case cmc_ConfigFieldTypeEnum_ARRAY:
+    default_value = NULL;
+    break;
+  default:
     err = cmc_errorf(EINVAL, "`type=%d` unrecognized\n", type);
-    goto error_out;
-  }
-
-  if (optional && !default_value) {
-    err = cmc_errorf(EINVAL, "`default_value=%p` cannot be NULL\n",
-                     default_value);
     goto error_out;
   }
 
@@ -78,6 +80,49 @@ error_out:
   return err;
 };
 
+cmc_error_t cmc_field_add_nested_field(struct cmc_ConfigField *field,
+                                       struct cmc_ConfigField *child_field) {
+  cmc_error_t err;
+
+  if (!field || !child_field) {
+    err = cmc_errorf(EINVAL, "`field=%p` and `child_field=%p` cannot be NULL\n",
+                     field, child_field);
+    goto error_out;
+  }
+
+  switch (field->type) {
+  case cmc_ConfigFieldTypeEnum_ARRAY:
+    break;
+  default:
+    err = cmc_errorf(EINVAL, "`field->type=%d` cannot be used as container\n",
+                     field->type);
+    goto error_out;
+  }
+
+  field->value = child_field;
+
+  return NULL;
+error_out:
+  return err;
+}
+
+cmc_error_t cmc_field_add_next_field(struct cmc_ConfigField *field,
+                                     struct cmc_ConfigField *next_field) {
+  cmc_error_t err;
+
+  if (!field || !next_field) {
+    err = cmc_errorf(EINVAL, "`field=%p` and `next_field=%p` cannot be NULL\n",
+                     field, next_field);
+    goto error_out;
+  }
+
+  field->next_field = next_field;
+
+  return NULL;
+error_out:
+  return err;
+}
+
 cmc_error_t cmc_field_get_str(const struct cmc_ConfigField *field,
                               char **output) {
   if (field->value) {
@@ -85,9 +130,10 @@ cmc_error_t cmc_field_get_str(const struct cmc_ConfigField *field,
   } else if (field->optional) {
     *output = field->default_value;
   } else {
-    return cmc_errorf(
-        ENOENT, "Field which is not optional, does not have value, `name=%s`\n",
-        field->name);
+    return cmc_errorf(ENOENT,
+                      "Field which is not optional, does not have value "
+                      "`name=%s`. Did you parsed config?\n",
+                      field->name);
   }
 
   return NULL;
@@ -98,11 +144,16 @@ cmc_error_t cmc_field_get_int(const struct cmc_ConfigField *field,
   if (field->value) {
     *output = *(int32_t *)field->value;
   } else if (field->optional) {
-    *output = *(int32_t *)field->default_value;
+    if (field->default_value) {
+      *output = *(int32_t *)field->default_value;
+    } else {
+      *output = 0;
+    }
   } else {
-    return cmc_errorf(
-        ENOENT, "Field which is not optional, does not have value, `name=%s`\n",
-        field->name);
+    return cmc_errorf(ENOENT,
+                      "Field which is not optional, does not have value "
+                      "`name=%s`. Did you parsed config?\n",
+                      field->name);
   }
 
   return NULL;
@@ -178,7 +229,7 @@ error_out:
 static inline cmc_error_t
 cmc_field_add_default_value(struct cmc_ConfigField *field,
                             const void *default_value) {
-  if (!field->optional) {
+  if (!default_value) {
     field->default_value = NULL;
     return NULL;
   }

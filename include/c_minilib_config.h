@@ -48,6 +48,7 @@ enum cmc_ConfigFieldTypeEnum {
   cmc_ConfigFieldTypeEnum_NONE,
   cmc_ConfigFieldTypeEnum_STRING,
   cmc_ConfigFieldTypeEnum_INT,
+  cmc_ConfigFieldTypeEnum_ARRAY,
   cmc_ConfigFieldTypeEnum_MAX,
 };
 
@@ -66,6 +67,10 @@ cmc_error_t cmc_field_create(const char *name,
                              const enum cmc_ConfigFieldTypeEnum type,
                              const void *default_value, const bool optional,
                              struct cmc_ConfigField **field);
+cmc_error_t cmc_field_add_nested_field(struct cmc_ConfigField *field,
+                                       struct cmc_ConfigField *child_field);
+cmc_error_t cmc_field_add_next_field(struct cmc_ConfigField *field,
+                                     struct cmc_ConfigField *next_field);
 cmc_error_t cmc_field_get_str(const struct cmc_ConfigField *field,
                               char **output);
 cmc_error_t cmc_field_get_int(const struct cmc_ConfigField *field, int *output);

@@ -182,4 +182,3 @@ cmc_error_t cmc_config_parse(struct cmc_Config *config) {
 error_out:
   return err;
 };
-

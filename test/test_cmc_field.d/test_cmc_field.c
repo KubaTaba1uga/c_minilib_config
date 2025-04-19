@@ -33,7 +33,7 @@ void test_field_create_invalid_type(void) {
 void test_field_create_optional_without_default(void) {
   err = cmc_field_create("abc", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
                          &field);
-  TEST_ASSERT_NOT_NULL(err);
+  TEST_ASSERT_NULL(err);
 }
 
 void test_field_create_string_with_default(void) {
