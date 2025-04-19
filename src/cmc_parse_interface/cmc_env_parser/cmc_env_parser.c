@@ -80,6 +80,33 @@ static cmc_error_t _cmc_env_parser_parse_field(FILE *config_file,
   char buffer[255];
   cmc_error_t err;
 
+  printf("  Field name: %s\n", field->name);
+  printf("    Type: ");
+
+  switch (field->type) {
+  case cmc_ConfigFieldTypeEnum_STRING:
+    printf("STRING\n");
+    printf("    Value: %s\n", field->value ? (char *)field->value : "<unset>");
+    break;
+  case cmc_ConfigFieldTypeEnum_INT:
+    if (field->value) {
+      printf("INT\n");
+      printf("    Value: %d\n", *(int32_t *)field->value);
+    } else {
+      printf("INT\n");
+      printf("    Value: <unset>\n");
+    }
+    break;
+  case cmc_ConfigFieldTypeEnum_ARRAY:
+    printf("ARRAY\n");
+    break;
+  default:
+    printf("UNKNOWN\n");
+    break;
+  }
+
+  printf("    Optional: %s\n", field->optional ? "yes" : "no");
+
   if (field->type == cmc_ConfigFieldTypeEnum_ARRAY) {
     struct cmc_ConfigField *subfield = field->value;
 
@@ -114,9 +141,15 @@ static cmc_error_t _cmc_env_parser_parse_field(FILE *config_file,
         goto error_out;
       }
 
-      char env_field_name[delimeter_ptr - buffer];
-      memset(env_field_name, 0, delimeter_ptr - buffer);
-      strncpy(env_field_name, delimeter_ptr + 1, delimeter_ptr - buffer);
+      char env_field_name[delimeter_ptr - buffer + 1];
+      memset(env_field_name, 0, delimeter_ptr - buffer + 1);
+      strncpy(env_field_name, buffer, delimeter_ptr - buffer);
+
+      char *name_char;
+      CMC_FOREACH_PTR(name_char, env_field_name, strlen(env_field_name)) {
+        *name_char = (char)tolower((int)*name_char);
+      }
+
       if (strcmp(field->name, env_field_name) == 0) {
         // Once we have a match we need to add it's value
         //   with respect to type and stop processing.
