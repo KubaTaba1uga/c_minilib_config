@@ -12,4 +12,3 @@ test_cmc_env_parser_exe = executable(
   c_args: ['-DCONFIG_PATH="' + meson.current_source_dir() + '/config"'],  
 )
 test('test_cmc_env_parser', test_cmc_env_parser_exe)
-

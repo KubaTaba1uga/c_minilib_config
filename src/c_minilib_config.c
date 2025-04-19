@@ -1,3 +1,4 @@
+#include <asm-generic/errno-base.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -153,22 +154,20 @@ cmc_error_t cmc_config_parse(struct cmc_Config *config) {
         return err;
       }
 
-      if (!matched_parser) {
-        continue;
+      if (matched_parser) {
+        CMC_LOG(config->settings, cmc_LogLevelEnum_DEBUG,
+                "Using %s configuration file", file_path);
+
+        err = parser->parse(sizeof(file_path) / sizeof(char), file_path,
+                            parser->data, config);
+        if (err) {
+          parser->destroy(parser->data);
+          goto error_out;
+        }
+
+        // TO-DO: print all configuration fields
+        break;
       }
-
-      CMC_LOG(config->settings, cmc_LogLevelEnum_DEBUG,
-              "Using %s configuration file", file_path);
-
-      err = parser->parse(sizeof(file_path) / sizeof(char), file_path,
-                          parser->data, config);
-      if (err) {
-        parser->destroy(parser->data);
-        goto error_out;
-      }
-
-      // TO-DO: print all configuration fields
-      break;
     }
 
     parser->destroy(parser->data);
@@ -180,10 +179,17 @@ cmc_error_t cmc_config_parse(struct cmc_Config *config) {
     }
   }
 
+  if (!matched_parser) {
+    err = cmc_errorf(ENOENT, "Unable to find configuration file\n", config);
+    goto error_out;
+  }
+
   return NULL;
+
 error_out:
   return err;
 };
+
 /* cmc_error_t cmc_config_get_str(const char *name, */
 /*                                const struct cmc_Config *config, size_t n, */
 /*                                char buffer[n]); */

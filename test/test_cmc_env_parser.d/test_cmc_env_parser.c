@@ -65,8 +65,7 @@ void test_parse_valid_env_file(void) {
       &(struct cmc_ConfigField){.name = "cmc_str_config",
                                 .type = cmc_ConfigFieldTypeEnum_STRING,
                                 .default_value = "default_value",
-                                .optional = true,
-                                .next_field = NULL},
+                                .optional = true},
       config);
   TEST_ASSERT_NULL(err);
 
@@ -75,8 +74,15 @@ void test_parse_valid_env_file(void) {
       &(struct cmc_ConfigField){.name = "cmc_int_config",
                                 .type = cmc_ConfigFieldTypeEnum_INT,
                                 .default_value = &default_val,
-                                .optional = true,
-                                .next_field = NULL},
+                                .optional = true},
+      config);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_config_add_field(
+      &(struct cmc_ConfigField){.name = "cmc_empty_config",
+                                .type = cmc_ConfigFieldTypeEnum_STRING,
+                                .default_value = "default_value",
+                                .optional = true},
       config);
   TEST_ASSERT_NULL(err);
 
@@ -86,6 +92,7 @@ void test_parse_valid_env_file(void) {
 
   // Find and assert both fields in config->fields
   struct cmc_ConfigField *f_str = NULL;
+  struct cmc_ConfigField *f_empty = NULL;
   struct cmc_ConfigField *f_int = NULL;
 
   for (struct cmc_ConfigField *f = config->fields; f; f = f->next_field) {
@@ -93,6 +100,8 @@ void test_parse_valid_env_file(void) {
       f_str = f;
     } else if (strcmp(f->name, "cmc_int_config") == 0) {
       f_int = f;
+    } else if (strcmp(f->name, "cmc_empty_config") == 0) {
+      f_empty = f;
     }
   }
 
@@ -103,4 +112,7 @@ void test_parse_valid_env_file(void) {
   TEST_ASSERT_NOT_NULL(f_int);
   TEST_ASSERT_NOT_NULL(f_int->value);
   TEST_ASSERT_EQUAL_INT(1, *(int *)f_int->value);
+
+  TEST_ASSERT_NOT_NULL(f_empty);
+  TEST_ASSERT_NULL(f_empty->value);
 }

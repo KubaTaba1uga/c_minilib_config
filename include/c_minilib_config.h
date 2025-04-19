@@ -65,7 +65,7 @@ struct cmc_Config {
   struct cmc_ConfigSettings *settings;
 };
 
-typedef struct cmx_Error *cmc_error_t;
+typedef struct cme_Error *cmc_error_t;
 
 cmc_error_t cmc_lib_init(void);
 cmc_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,

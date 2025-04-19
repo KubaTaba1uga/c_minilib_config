@@ -40,7 +40,7 @@ static cmc_error_t _cmc_env_parser_parse(const size_t n, const char path[n],
 
   FILE *config_file = fopen(file_path, "r");
   if (!config_file) {
-    err = cmc_errorf(EINVAL, "Unable to open %d\n", file_path);
+    err = cmc_errorf(EINVAL, "Unable to open %s\n", file_path);
     goto error_out;
   }
 
@@ -112,6 +112,13 @@ _cmc_env_parser_parse_single_line(char *line, struct cmc_Config *config) {
       strncpy(env_field_value, delimeter_ptr + 1, value_len);
       env_field_value[value_len] = 0;
 
+      // If env has empty value we are considering it as non existsent
+      //  in config file.
+      if (value_len == 0) {
+        field->value = NULL;
+        goto next_field_cleanup;
+      }
+
       if (env_field_value[value_len - 1] == '\n') {
         env_field_value[value_len - 1] = 0;
       }
@@ -131,6 +138,7 @@ _cmc_env_parser_parse_single_line(char *line, struct cmc_Config *config) {
         goto error_env_field_name_cleanup;
       }
 
+    next_field_cleanup:
       field = NULL;
     } else {
       field = field->next_field;
