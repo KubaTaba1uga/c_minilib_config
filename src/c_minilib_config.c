@@ -92,9 +92,8 @@ void cmc_config_destroy(struct cmc_Config **config) {
   *config = NULL;
 };
 
-cmc_error_t cmc_config_add_field(const struct cmc_ConfigField *field,
+cmc_error_t cmc_config_add_field(struct cmc_ConfigField *field,
                                  struct cmc_Config *config) {
-  struct cmc_ConfigField *local_field;
   cmc_error_t err;
 
   if (!field || !config) {
@@ -103,14 +102,8 @@ cmc_error_t cmc_config_add_field(const struct cmc_ConfigField *field,
     goto error_out;
   }
 
-  err = cmc_field_create(field->name, field->type, field->default_value,
-                         field->optional, &local_field);
-  if (err) {
-    goto error_out;
-  }
-
-  local_field->next_field = config->fields;
-  config->fields = local_field;
+  field->next_field = config->fields;
+  config->fields = field;
 
   return NULL;
 
@@ -190,45 +183,3 @@ error_out:
   return err;
 };
 
-cmc_error_t cmc_config_get_str(const char *name,
-                               const struct cmc_Config *config, char **output) {
-  CMC_FIELD_ITER(field, config->fields) {
-    if (strcmp(name, field->name) == 0) {
-      if (field->value) {
-        *output = field->value;
-      } else if (field->optional) {
-        *output = field->default_value;
-      } else {
-        return cmc_errorf(
-            ENOENT, "No optional field without a value matching `name=%s`\n",
-            name);
-      }
-
-      return NULL;
-    }
-  }
-
-  return cmc_errorf(ENOENT, "Unable to find field matching `name=%s`\n", name);
-};
-
-cmc_error_t cmc_config_get_int(const char *name,
-                               const struct cmc_Config *config,
-                               int32_t *output) {
-  CMC_FIELD_ITER(field, config->fields) {
-    if (strcmp(name, field->name) == 0) {
-      if (field->value) {
-        *output = *(int32_t *)field->value;
-      } else if (field->optional) {
-        *output = *(int32_t *)field->default_value;
-      } else {
-        return cmc_errorf(
-            ENOENT, "No optional field without a value matching `name=%s`\n",
-            name);
-      }
-
-      return NULL;
-    }
-  }
-
-  return cmc_errorf(ENOENT, "Unable to find field matching `name=%s`\n", name);
-};

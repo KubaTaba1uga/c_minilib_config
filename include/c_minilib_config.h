@@ -30,20 +30,20 @@
     };
 */
 
-enum cmc_LogLevelEnum {
-  cmc_LogLevelEnum_ERROR,
-  cmc_LogLevelEnum_WARNING,
-  cmc_LogLevelEnum_INFO,
-  cmc_LogLevelEnum_DEBUG,
-};
+/******************************************************************************
+ *                             General                                        *
+ ******************************************************************************/
+typedef struct cme_Error *cmc_error_t;
+cmc_error_t cmc_lib_init(void);
+cmc_error_t cmc_lib_destroy(void);
 
-struct cmc_ConfigSettings {
-  char **supported_paths;
-  uint32_t paths_length;
-  char *name;
-  void (*log_func)(enum cmc_LogLevelEnum log_level, char *msg);
-};
+static inline void cmc_error_destroy(cmc_error_t *error) {
+  cme_error_destroy((struct cme_Error *)*error);
+}
 
+/******************************************************************************
+ *                             Field                                          *
+ ******************************************************************************/
 enum cmc_ConfigFieldTypeEnum {
   cmc_ConfigFieldTypeEnum_NONE,
   cmc_ConfigFieldTypeEnum_STRING,
@@ -60,31 +60,47 @@ struct cmc_ConfigField {
   void *next_field;
 };
 
+// This function allocates memory, there is no destruct because all
+//  fields are freed on config destruct.
+cmc_error_t cmc_field_create(const char *name,
+                             const enum cmc_ConfigFieldTypeEnum type,
+                             const void *default_value, const bool optional,
+                             struct cmc_ConfigField **field);
+cmc_error_t cmc_field_get_str(const struct cmc_ConfigField *field,
+                              char **output);
+cmc_error_t cmc_field_get_int(const struct cmc_ConfigField *field, int *output);
+
+/******************************************************************************
+ *                             Config *
+ ******************************************************************************/
+enum cmc_LogLevelEnum {
+  cmc_LogLevelEnum_ERROR,
+  cmc_LogLevelEnum_WARNING,
+  cmc_LogLevelEnum_INFO,
+  cmc_LogLevelEnum_DEBUG,
+};
+
+struct cmc_ConfigSettings {
+  char **supported_paths;
+  uint32_t paths_length;
+  char *name;
+  void (*log_func)(enum cmc_LogLevelEnum log_level, char *msg);
+};
+
 struct cmc_Config {
   struct cmc_ConfigField *fields;
   struct cmc_ConfigSettings *settings;
 };
 
-typedef struct cme_Error *cmc_error_t;
-
-cmc_error_t cmc_lib_init(void);
+// Config is basically collection for fields
 cmc_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,
                               struct cmc_Config **config);
-void cmc_config_destroy(struct cmc_Config **config);
-cmc_error_t cmc_config_add_field(const struct cmc_ConfigField *field,
+// Add fields to config
+cmc_error_t cmc_config_add_field(struct cmc_ConfigField *field,
                                  struct cmc_Config *config);
+// Create values for fields
 cmc_error_t cmc_config_parse(struct cmc_Config *config);
-
-// `str` is already allocated memory which should be destroyed by calling
-//     cmc_config_destroy.
-cmc_error_t cmc_config_get_str(const char *name,
-                               const struct cmc_Config *config, char **output);
-
-cmc_error_t cmc_config_get_int(const char *name,
-                               const struct cmc_Config *config, int *output);
-
-static inline void cmc_error_destroy(cmc_error_t *error) {
-  cme_error_destroy((struct cme_Error *)*error);
-}
+// Destroy all fields and their values
+void cmc_config_destroy(struct cmc_Config **config);
 
 #endif // C_MINILIB_CONFIG_H

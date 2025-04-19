@@ -28,7 +28,6 @@ void tearDown(void) {
     cmc_error_destroy(&err);
 }
 
-// Basic creation tests
 void test_cmc_config_create_null_output(void) {
     err = cmc_config_create(NULL, NULL);
     TEST_ASSERT_NOT_NULL(err);
@@ -44,15 +43,12 @@ void test_cmc_config_create_with_null_settings(void) {
 void test_cmc_config_create_with_valid_settings(void) {
     char *paths[] = {"/path/one", "/path/two"};
 
-    err = cmc_config_create(
-        &(struct cmc_ConfigSettings){
-            .supported_paths = paths,
-            .paths_length = 2,
-            .name = "test_config",
-            .log_func = NULL
-        },
-        &config
-    );
+    err = cmc_config_create(&(struct cmc_ConfigSettings){
+        .supported_paths = paths,
+        .paths_length = 2,
+        .name = "test_config",
+        .log_func = NULL
+    }, &config);
 
     TEST_ASSERT_NULL(err);
     TEST_ASSERT_NOT_NULL(config);
@@ -76,25 +72,19 @@ void test_cmc_config_add_valid_field(void) {
         char name[FIELD_NAME_MAX];
         sprintf(name, "server_host_%d", i);
 
-        err = cmc_config_add_field(
-            &(struct cmc_ConfigField){
-                .name = name,
-                .type = cmc_ConfigFieldTypeEnum_STRING,
-                .default_value = "localhost",
-                .optional = true
-            },
-            config
-        );
+        struct cmc_ConfigField *field;
+        err = cmc_field_create(name, cmc_ConfigFieldTypeEnum_STRING, "localhost", true, &field);
+        TEST_ASSERT_NULL(err);
 
+        err = cmc_config_add_field(field, config);
         TEST_ASSERT_NULL(err);
         TEST_ASSERT_NOT_NULL(config->fields);
         TEST_ASSERT_EQUAL_STRING(name, config->fields->name);
-        TEST_ASSERT_EQUAL_STRING("localhost", config->fields->default_value);
+        TEST_ASSERT_EQUAL_STRING("localhost", (char *)config->fields->default_value);
         TEST_ASSERT_TRUE(config->fields->optional);
     }
 }
 
-// Extended tests: initialization, parsing superApp.env, getters
 void test_cmc_lib_init_idempotent(void) {
     err = cmc_lib_init();
     TEST_ASSERT_NULL(err);
@@ -103,99 +93,83 @@ void test_cmc_lib_init_idempotent(void) {
 }
 
 void test_parse_superApp_env_and_getters(void) {
-    /* Initialize parser */
     err = cmc_lib_init();
     TEST_ASSERT_NULL(err);
 
-    /* Point at superApp.env */
-    char *paths[] = { (char *)CONFIG_DIR };
-    err = cmc_config_create(
-        &(struct cmc_ConfigSettings){
-            .supported_paths = paths,
-            .paths_length = 1,
-            .name = "superApp",
-            .log_func = NULL
-        },
-        &config
-    );
+    char *paths[] = {(char *)CONFIG_DIR};
+    err = cmc_config_create(&(struct cmc_ConfigSettings){
+        .supported_paths = paths,
+        .paths_length = 1,
+        .name = "superApp",
+        .log_func = NULL
+    }, &config);
     TEST_ASSERT_NULL(err);
 
-    /* Define expected fields */
+    struct cmc_ConfigField *f_name, *f_amount, *f_something;
     static int def_amount = 0;
-    err = cmc_config_add_field(
-        &(struct cmc_ConfigField){
-            .name = "name",
-            .type = cmc_ConfigFieldTypeEnum_STRING,
-            .default_value = "<none>",
-            .optional = true
-        },
-        config
-    );
+
+    err = cmc_field_create("name", cmc_ConfigFieldTypeEnum_STRING, "<none>", true, &f_name);
     TEST_ASSERT_NULL(err);
-    err = cmc_config_add_field(
-        &(struct cmc_ConfigField){
-            .name = "amount",
-            .type = cmc_ConfigFieldTypeEnum_INT,
-            .default_value = &def_amount,
-            .optional = true
-        },
-        config
-    );
-    TEST_ASSERT_NULL(err);
-    err = cmc_config_add_field(
-        &(struct cmc_ConfigField){
-            .name = "something",
-            .type = cmc_ConfigFieldTypeEnum_STRING,
-            .default_value = "<empty>",
-            .optional = true
-        },
-        config
-    );
+    err = cmc_config_add_field(f_name, config);
     TEST_ASSERT_NULL(err);
 
-    /* Parse */
+    err = cmc_field_create("amount", cmc_ConfigFieldTypeEnum_INT, &def_amount, true, &f_amount);
+    TEST_ASSERT_NULL(err);
+    err = cmc_config_add_field(f_amount, config);
+    TEST_ASSERT_NULL(err);
+
+    err = cmc_field_create("something", cmc_ConfigFieldTypeEnum_STRING, "<empty>", true, &f_something);
+    TEST_ASSERT_NULL(err);
+    err = cmc_config_add_field(f_something, config);
+    TEST_ASSERT_NULL(err);
+
     err = cmc_config_parse(config);
     TEST_ASSERT_NULL(err);
 
-    /* Validate NAME -> "whatever" */
-    char *s_name = NULL;
-    err = cmc_config_get_str("name", config, &s_name);
+    char *val_name = NULL;
+    err = cmc_field_get_str(f_name, &val_name);
     TEST_ASSERT_NULL(err);
-    TEST_ASSERT_EQUAL_STRING("whatever", s_name);
+    TEST_ASSERT_EQUAL_STRING("whatever", val_name);
 
-    /* Validate AMOUNT -> 1 */
-    int v_amount = -1;
-    err = cmc_config_get_int("amount", config, &v_amount);
+    int val_amount = -1;
+    err = cmc_field_get_int(f_amount, &val_amount);
     TEST_ASSERT_NULL(err);
-    TEST_ASSERT_EQUAL_INT(1, v_amount);
+    TEST_ASSERT_EQUAL_INT(1, val_amount);
 
-    /* Validate SOMETHING -> default "<empty>" */
-    char *s_som = NULL;
-    err = cmc_config_get_str("something", config, &s_som);
+    char *val_something = NULL;
+    err = cmc_field_get_str(f_something, &val_something);
     TEST_ASSERT_NULL(err);
-    TEST_ASSERT_EQUAL_STRING("<empty>", s_som);
+    TEST_ASSERT_EQUAL_STRING("<empty>", val_something);
 }
 
-void test_getters_on_missing_field_return_error_str(void) {
-    err = cmc_lib_init();
-    TEST_ASSERT_NULL(err);
+void test_getters_on_unset_required_field_str(void) {
     err = cmc_config_create(NULL, &config);
     TEST_ASSERT_NULL(err);
 
-    char *out_s;
-    err = cmc_config_get_str("no_such", config, &out_s);
-    TEST_ASSERT_NOT_NULL(err);
+    struct cmc_ConfigField *field;
+    err = cmc_field_create("required_str", cmc_ConfigFieldTypeEnum_STRING, NULL, false, &field);
+    TEST_ASSERT_NULL(err);
 
+    err = cmc_config_add_field(field, config);
+    TEST_ASSERT_NULL(err);
+
+    char *out_s = NULL;
+    err = cmc_field_get_str(field, &out_s);
+    TEST_ASSERT_NOT_NULL(err);
 }
 
-void test_getters_on_missing_field_return_error_int(void) {
-    err = cmc_lib_init();
-    TEST_ASSERT_NULL(err);
+void test_getters_on_unset_required_field_int(void) {
     err = cmc_config_create(NULL, &config);
     TEST_ASSERT_NULL(err);
 
-    int out_i;
-    err = cmc_config_get_int("no_such", config, &out_i);
+    struct cmc_ConfigField *field;
+    err = cmc_field_create("required_int", cmc_ConfigFieldTypeEnum_INT, NULL, false, &field);
+    TEST_ASSERT_NULL(err);
+
+    err = cmc_config_add_field(field, config);
+    TEST_ASSERT_NULL(err);
+
+    int out_i = -1;
+    err = cmc_field_get_int(field, &out_i);
     TEST_ASSERT_NOT_NULL(err);
 }
-

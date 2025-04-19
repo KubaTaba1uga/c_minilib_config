@@ -1,3 +1,4 @@
+#include <asm-generic/errno.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -77,6 +78,36 @@ error_out:
   return err;
 };
 
+cmc_error_t cmc_field_get_str(const struct cmc_ConfigField *field,
+                              char **output) {
+  if (field->value) {
+    *output = field->value;
+  } else if (field->optional) {
+    *output = field->default_value;
+  } else {
+    return cmc_errorf(
+        ENOENT, "Field which is not optional, does not have value, `name=%s`\n",
+        field->name);
+  }
+
+  return NULL;
+};
+
+cmc_error_t cmc_field_get_int(const struct cmc_ConfigField *field,
+                              int32_t *output) {
+  if (field->value) {
+    *output = *(int32_t *)field->value;
+  } else if (field->optional) {
+    *output = *(int32_t *)field->default_value;
+  } else {
+    return cmc_errorf(
+        ENOENT, "Field which is not optional, does not have value, `name=%s`\n",
+        field->name);
+  }
+
+  return NULL;
+};
+
 void cmc_field_destroy(struct cmc_ConfigField **field) {
   if (!field || !*field) {
     return;
@@ -147,6 +178,11 @@ error_out:
 static inline cmc_error_t
 cmc_field_add_default_value(struct cmc_ConfigField *field,
                             const void *default_value) {
+  if (!field->optional) {
+    field->default_value = NULL;
+    return NULL;
+  }
+
   cmc_error_t err = NULL;
   switch (field->type) {
   case cmc_ConfigFieldTypeEnum_STRING:
@@ -166,6 +202,11 @@ cmc_field_add_default_value(struct cmc_ConfigField *field,
 
 static inline cmc_error_t cmc_alloc_field_value_str(const char *value,
                                                     void **field_value) {
+  if (!value || !field_value) {
+    return cmc_errorf(EINVAL,
+                      "`value=%p` and `field_value=%p` cannot be NULL\n");
+  }
+
   *field_value = strdup(value);
   if (!*field_value) {
     return cmc_errorf(ENOMEM, "Unable to allocate memory for `field->value`\n");
@@ -176,6 +217,10 @@ static inline cmc_error_t cmc_alloc_field_value_str(const char *value,
 
 static inline cmc_error_t cmc_alloc_field_value_int(const int32_t value,
                                                     void **field_value) {
+  if (!field_value) {
+    return cmc_errorf(EINVAL, "`field_value=%p` cannot be NULL\n");
+  }
+
   int32_t *local_int = malloc(sizeof(int32_t));
   if (!local_int) {
     return cmc_errorf(ENOMEM, "Unable to allocate memory for `field->value`\n");
