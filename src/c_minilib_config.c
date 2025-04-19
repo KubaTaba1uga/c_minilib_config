@@ -190,9 +190,45 @@ error_out:
   return err;
 };
 
-/* cmc_error_t cmc_config_get_str(const char *name, */
-/*                                const struct cmc_Config *config, size_t n, */
-/*                                char buffer[n]); */
-/* cmc_error_t cmc_config_get_int(const char *name, */
-/*                                const struct cmc_Config *config, int *output);
- */
+cmc_error_t cmc_config_get_str(const char *name,
+                               const struct cmc_Config *config, char **output) {
+  CMC_FIELD_ITER(field, config->fields) {
+    if (strcmp(name, field->name) == 0) {
+      if (field->value) {
+        *output = field->value;
+      } else if (field->optional) {
+        *output = field->default_value;
+      } else {
+        return cmc_errorf(
+            ENOENT, "No optional field without a value matching `name=%s`\n",
+            name);
+      }
+
+      return NULL;
+    }
+  }
+
+  return cmc_errorf(ENOENT, "Unable to find field matching `name=%s`\n", name);
+};
+
+cmc_error_t cmc_config_get_int(const char *name,
+                               const struct cmc_Config *config,
+                               int32_t *output) {
+  CMC_FIELD_ITER(field, config->fields) {
+    if (strcmp(name, field->name) == 0) {
+      if (field->value) {
+        *output = *(int32_t *)field->value;
+      } else if (field->optional) {
+        *output = *(int32_t *)field->default_value;
+      } else {
+        return cmc_errorf(
+            ENOENT, "No optional field without a value matching `name=%s`\n",
+            name);
+      }
+
+      return NULL;
+    }
+  }
+
+  return cmc_errorf(ENOENT, "Unable to find field matching `name=%s`\n", name);
+};

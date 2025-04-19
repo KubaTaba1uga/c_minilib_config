@@ -17,4 +17,8 @@ cmc_error_t cmc_field_add_value_int(struct cmc_ConfigField *field,
 
 void cmc_field_destroy(struct cmc_ConfigField **field);
 
+#define CMC_FIELD_ITER(var, field)                                             \
+  for (struct cmc_ConfigField *var = (field); (var) != NULL;                   \
+       (var) = (var)->next_field)
+
 #endif // C_MINILIB_CONFIG_CMC_FIELD_H

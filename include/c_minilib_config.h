@@ -74,9 +74,12 @@ void cmc_config_destroy(struct cmc_Config **config);
 cmc_error_t cmc_config_add_field(const struct cmc_ConfigField *field,
                                  struct cmc_Config *config);
 cmc_error_t cmc_config_parse(struct cmc_Config *config);
+
+// `str` is already allocated memory which should be destroyed by calling
+//     cmc_config_destroy.
 cmc_error_t cmc_config_get_str(const char *name,
-                               const struct cmc_Config *config, size_t n,
-                               char buffer[n]);
+                               const struct cmc_Config *config, char **output);
+
 cmc_error_t cmc_config_get_int(const char *name,
                                const struct cmc_Config *config, int *output);
 
