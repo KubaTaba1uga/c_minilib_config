@@ -57,7 +57,7 @@ void test_cmc_config_create_with_valid_settings(void) {
     TEST_ASSERT_NULL(err);
     TEST_ASSERT_NOT_NULL(config);
     TEST_ASSERT_NOT_NULL(config->settings);
-    TEST_ASSERT_EQUAL_UINT32(2, config->settings->paths_length);
+    TEST_ASSERT_EQUAL_UINT32(3, config->settings->paths_length);
     TEST_ASSERT_EQUAL_STRING("test_config", config->settings->name);
 }
 

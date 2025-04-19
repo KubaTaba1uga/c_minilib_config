@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "c_minilib_config.h"
 #include "utils/cmc_error.h"
@@ -34,7 +35,8 @@ cmc_error_t cmc_settings_create(const uint32_t paths_length,
   local_settings->paths_length = 0;
   local_settings->supported_paths = NULL;
 
-  for (uint32_t i = 0; i < local_paths_length; i++) {
+  for (uint32_t i = 0, additional_paths = 1;
+       i < local_paths_length + additional_paths; i++) {
     char **local_supported_paths;
 
     local_supported_paths = (char **)realloc(
@@ -49,7 +51,15 @@ cmc_error_t cmc_settings_create(const uint32_t paths_length,
 
     local_settings->supported_paths = local_supported_paths;
 
-    local_settings->supported_paths[i] = strdup(supported_paths[i]);
+    // First we are injecting additional paths
+    if (i == 0) {
+      local_settings->supported_paths[i] = getcwd(NULL, 0);
+    } else {
+      // Here starts normal processing
+      local_settings->supported_paths[i] =
+          strdup(supported_paths[i - additional_paths]);
+    }
+
     if (!local_settings->supported_paths) {
       err = cmc_errorf(ENOMEM,
                        "Unable to allocate memory for "
@@ -57,9 +67,10 @@ cmc_error_t cmc_settings_create(const uint32_t paths_length,
                        i);
       goto error_settings_paths_iter_cleanup;
     }
-  }
 
-  local_settings->paths_length = local_paths_length;
+    // We need to add 1 for length
+    local_settings->paths_length = i + 1;
+  }
 
   if (!name) {
     name = "config";

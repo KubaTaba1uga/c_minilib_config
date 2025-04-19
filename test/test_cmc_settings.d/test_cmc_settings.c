@@ -1,5 +1,7 @@
+#include <linux/limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <unity.h>
 
 #include "c_minilib_config.h"
@@ -14,7 +16,7 @@ void setUp(void) {
 }
 
 void tearDown(void) {
-  
+
   cmc_settings_destroy(&settings);
   cmc_error_destroy(&err);
 }
@@ -27,11 +29,12 @@ void test_cmc_settings_create_basic(void) {
   err = cmc_settings_create(paths_len, paths, name, NULL, &settings);
   TEST_ASSERT_NULL(err);
   TEST_ASSERT_NOT_NULL(settings);
-  TEST_ASSERT_EQUAL_UINT32(paths_len, settings->paths_length);
+  TEST_ASSERT_EQUAL_UINT32(paths_len + 1, settings->paths_length);
   TEST_ASSERT_EQUAL_STRING(name, settings->name);
 
+  char **supported_paths = settings->supported_paths + 1;
   for (uint32_t i = 0; i < paths_len; ++i) {
-    TEST_ASSERT_EQUAL_STRING(paths[i], settings->supported_paths[i]);
+    TEST_ASSERT_EQUAL_STRING(paths[i], supported_paths[i]);
   }
 }
 
@@ -39,9 +42,16 @@ void test_cmc_settings_create_null_paths(void) {
   err = cmc_settings_create(0, NULL, NULL, NULL, &settings);
   TEST_ASSERT_NULL(err);
   TEST_ASSERT_NOT_NULL(settings);
-  TEST_ASSERT_EQUAL_UINT32(0, settings->paths_length);
+  // Default search path is current working dir
+  TEST_ASSERT_EQUAL_UINT32(1, settings->paths_length);
   TEST_ASSERT_NOT_NULL(settings->name);
   TEST_ASSERT_EQUAL_STRING("config", settings->name);
+
+  for (uint32_t i = 0; i < settings->paths_length; ++i) {
+    char buffer[PATH_MAX];
+    TEST_ASSERT_EQUAL_STRING(getcwd(buffer, PATH_MAX),
+                             settings->supported_paths[i]);
+  }
 }
 
 void test_cmc_settings_create_invalid_output(void) {
