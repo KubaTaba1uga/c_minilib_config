@@ -147,7 +147,7 @@ static cmc_error_t _cmc_env_parser_parse_array_field(
   struct cmc_ConfigField *subfield = field->value;
   struct cmc_ConfigField *prev_subfield = NULL;
   int32_t i = 0;
-  while (subfield && i < 5) {
+  while (subfield) {
     struct cmc_ConfigField *next_subfield = NULL;
 
     char *new_name_ptr;
