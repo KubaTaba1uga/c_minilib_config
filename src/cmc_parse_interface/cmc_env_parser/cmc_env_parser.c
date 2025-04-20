@@ -154,7 +154,6 @@ _cmc_env_parser_parse_array_field(FILE *config_file,
                                   struct cmc_ConfigField *field) {
   const uint32_t new_name_max = 255;
   char new_name_buffer[new_name_max];
-  struct cmc_ConfigField *subfield;
   char *new_name_ptr;
   cmc_error_t err;
 
@@ -162,60 +161,54 @@ _cmc_env_parser_parse_array_field(FILE *config_file,
     return NULL;
   }
 
-  struct cmc_ConfigField *previous_subfield = NULL;
-  subfield = field->value;
-
-  for (int32_t i = 0; i < 3; i++) {
-
+  struct cmc_ConfigField *subfield = field->value;
+  struct cmc_ConfigField *prev_subfield = NULL;
+  int32_t i = 0;
+  while (true) {
     memset(new_name_buffer, 0, new_name_max);
-    snprintf(new_name_buffer, new_name_max - 1, "%s_%d", field->name, i);
-    puts(new_name_buffer);
+    snprintf(new_name_buffer, new_name_max - 1, "%s_%d", field->name, i++);
     new_name_ptr = strdup(new_name_buffer);
     if (!new_name_ptr) {
       return cmc_errorf(ENOMEM, "Failed to strdup subfield name");
     }
-
     free(subfield->name);
     subfield->name = new_name_ptr;
+
+    puts(subfield->name);
 
     err = _cmc_env_parser_parse_field(config_file, subfield);
     if (err) {
       goto error_out;
     }
 
-    // If there is no name_N there is no point in looking for name_N+1
     if (!subfield->value) {
-      if (previous_subfield) {
-        previous_subfield->next_field = NULL;
+      if (prev_subfield) {
+        prev_subfield->next_field = NULL;
         cmc_field_destroy(&subfield);
       }
+
       break;
     }
-
     struct cmc_ConfigField *next_subfield;
-
     err = cmc_field_create(subfield->name, subfield->type, NULL, true,
                            &next_subfield);
     if (err) {
       goto error_out;
     }
 
-    if (subfield->type == cmc_ConfigFieldTypeEnum_ARRAY) {
-      struct cmc_ConfigField *child_subfield;
-      err = cmc_field_create("",
-                             ((struct cmc_ConfigField *)subfield->value)->type,
-                             NULL, true, &child_subfield);
+    if (next_subfield->type == cmc_ConfigFieldTypeEnum_ARRAY) {
+      struct cmc_ConfigField *nested_subfield = subfield->value;
+      printf("name=%s, type=array\n", next_subfield->name);
+      err = cmc_field_create(nested_subfield->name, nested_subfield->type, NULL,
+                             false, &nested_subfield);
       if (err) {
         goto error_out;
       }
 
-      err = cmc_field_add_nested_field(next_subfield, child_subfield);
-      if (err) {
-        goto error_out;
-      }
+      next_subfield->value = nested_subfield;
     }
 
-    previous_subfield = subfield;
+    prev_subfield = subfield;
     subfield->next_field = next_subfield;
     subfield = next_subfield;
   }
