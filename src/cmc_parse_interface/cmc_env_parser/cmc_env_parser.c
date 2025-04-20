@@ -62,6 +62,10 @@ static cmc_error_t _cmc_env_parser_parse(const size_t n, const char path[n],
   CMC_FIELD_ITER(field, config->fields) {
     err = _cmc_env_parser_parse_field(config_file, field);
     if (err) {
+      if (field->type == cmc_ConfigFieldTypeEnum_ARRAY && err->code == ENOENT) {
+        cmc_error_destroy(&err);
+        continue;
+      }
       goto error_file_cleanup;
     }
   }
@@ -83,35 +87,6 @@ static void _cmc_env_parser_destroy(cmc_ConfigParserData *data){
 static cmc_error_t _cmc_env_parser_parse_field(FILE *config_file,
                                                struct cmc_ConfigField *field) {
   cmc_error_t err;
-
-  /* printf("  Field name: %s\n", field->name); */
-  /* printf("    Type: "); */
-
-  /* switch (field->type) { */
-  /* case cmc_ConfigFieldTypeEnum_STRING: */
-  /*   printf("STRING\n"); */
-  /*   printf("    Value: %s\n", field->value ? (char *)field->value :
-   * "<unset>"); */
-  /*   break; */
-  /* case cmc_ConfigFieldTypeEnum_INT: */
-  /*   if (field->value) { */
-  /*     printf("INT\n"); */
-  /*     printf("    Value: %d\n", *(int32_t *)field->value); */
-  /*   } else { */
-  /*     printf("INT\n"); */
-  /*     printf("    Value: <unset>\n"); */
-  /*   } */
-  /*   break; */
-  /* case cmc_ConfigFieldTypeEnum_ARRAY: */
-  /*   printf("ARRAY\n"); */
-  /*   break; */
-  /* default: */
-  /*   printf("UNKNOWN\n"); */
-  /*   break; */
-  /* } */
-
-  /* printf("    Optional: %s\n", field->optional ? "yes" : "no"); */
-
   if (field->type == cmc_ConfigFieldTypeEnum_ARRAY) {
     err = _cmc_env_parser_parse_array_field(config_file, field);
     if (err) {
@@ -165,6 +140,9 @@ _cmc_env_parser_parse_array_field(FILE *config_file,
   struct cmc_ConfigField *prev_subfield = NULL;
   int32_t i = 0;
   while (true) {
+    if (i > 5) {
+      break;
+    }
     memset(new_name_buffer, 0, new_name_max);
     snprintf(new_name_buffer, new_name_max - 1, "%s_%d", field->name, i++);
     new_name_ptr = strdup(new_name_buffer);
@@ -175,7 +153,6 @@ _cmc_env_parser_parse_array_field(FILE *config_file,
     subfield->name = new_name_ptr;
 
     puts(subfield->name);
-
     err = _cmc_env_parser_parse_field(config_file, subfield);
     if (err) {
       goto error_out;
@@ -189,6 +166,7 @@ _cmc_env_parser_parse_array_field(FILE *config_file,
 
       break;
     }
+
     struct cmc_ConfigField *next_subfield;
     err = cmc_field_create(subfield->name, subfield->type, NULL, true,
                            &next_subfield);

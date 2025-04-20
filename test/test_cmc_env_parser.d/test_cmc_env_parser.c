@@ -164,6 +164,7 @@ void test_parse_array_env_file(void) {
   // 5) parse
   err =
       parser.parse(strlen(ARRAY_CONFIG_PATH), ARRAY_CONFIG_PATH, NULL, config);
+  /* puts(err->msg); */
   TEST_ASSERT_NULL(err);
 
   // 6) check empty_array: first element should be optional 0, no next
@@ -180,6 +181,7 @@ void test_parse_array_env_file(void) {
   TEST_ASSERT_NULL(err);
   TEST_ASSERT_EQUAL_INT(0, out);
   elem = elem->next_field;
+  TEST_ASSERT_NOT_NULL(elem);
   err = cmc_field_get_int(elem, &out);
   TEST_ASSERT_NULL(err);
   TEST_ASSERT_EQUAL_INT(1, out);
