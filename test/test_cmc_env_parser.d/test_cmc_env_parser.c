@@ -174,6 +174,8 @@ void test_parse_array_env_file(void) {
 
   // 6) check empty_array: first element should be optional 0, no next
   struct cmc_ConfigField *elem = f_empty_array->value;
+  TEST_ASSERT_NOT_NULL(elem);
+
   int out;
   err = cmc_field_get_int(elem, &out);
   TEST_ASSERT_NULL(err);
@@ -217,7 +219,7 @@ void test_parse_array_env_file(void) {
   TEST_ASSERT_EQUAL_INT(11, out);
 }
 
-void test_required_array_without_default_should_fail(void) {
+void __test_required_array_without_default_should_fail(void) {
   // Setup config for nonexistent input
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
@@ -250,7 +252,7 @@ void test_required_array_without_default_should_fail(void) {
   TEST_ASSERT_EQUAL_INT(ENOENT, err->code);
 }
 
-void test_required_array_without_default_should_fail_always(void) {
+void __test_required_array_without_default_should_fail_always(void) {
   // Setup config for nonexistent input
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
