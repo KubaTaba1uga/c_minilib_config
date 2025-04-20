@@ -49,17 +49,15 @@ void test_field_create_string_with_default(void) {
 }
 
 void test_field_add_string_value(void) {
-  test_field_create_string_with_default();
+  err = cmc_field_create("my_field", cmc_ConfigFieldTypeEnum_STRING, "default",
+                         true, &field);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_NOT_NULL(field);
+
   err = cmc_field_add_value_str(field, "value");
   TEST_ASSERT_NULL(err);
   TEST_ASSERT_NOT_NULL(field->value);
   TEST_ASSERT_EQUAL_STRING("value", (char *)field->value);
-}
-
-void test_field_add_string_value_twice_fails(void) {
-  test_field_add_string_value();
-  err = cmc_field_add_value_str(field, "another");
-  TEST_ASSERT_NOT_NULL(err);
 }
 
 void test_field_add_value_null(void) {
@@ -77,9 +75,7 @@ void test_field_create_int_with_default(void) {
 }
 
 void test_field_add_int_value(void) {
-  int32_t val = 0;
-  err =
-      cmc_field_create("port", cmc_ConfigFieldTypeEnum_INT, &val, true, &field);
+  err = cmc_field_create("port", cmc_ConfigFieldTypeEnum_INT, 0, false, &field);
   TEST_ASSERT_NULL(err);
 
   err = cmc_field_add_value_int(field, 8080);
@@ -87,8 +83,18 @@ void test_field_add_int_value(void) {
   TEST_ASSERT_EQUAL_INT(8080, *(int32_t *)field->value);
 }
 
-void test_field_add_int_value_twice_fails(void) {
-  test_field_add_int_value();
-  err = cmc_field_add_value_int(field, 9090);
-  TEST_ASSERT_NOT_NULL(err);
+void test_field_add_int_value_optional(void) {
+  int32_t def_val = -1;
+  err = cmc_field_create("port", cmc_ConfigFieldTypeEnum_INT, &def_val, true,
+                         &field);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_INT(def_val, *(int32_t *)field->value);
+
+  err = cmc_field_add_value_int(field, 8080);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_INT(8080, *(int32_t *)field->value);
+
+  err = cmc_field_add_value_int(field, 333);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_INT(333, *(int32_t *)field->value);
 }

@@ -185,11 +185,8 @@ cmc_error_t cmc_field_add_value_str(struct cmc_ConfigField *field,
   }
 
   if (field->value) {
-    err = cmc_errorf(
-        EINVAL,
-        "`field->value=%p` is already populated, cannot add `value=%p`\n",
-        field->value, value);
-    goto error_out;
+    free(field->value);
+    field->value = NULL;
   }
 
   err = cmc_alloc_field_value_str(value, &field->value);
@@ -212,11 +209,8 @@ cmc_error_t cmc_field_add_value_int(struct cmc_ConfigField *field,
   }
 
   if (field->value) {
-    err = cmc_errorf(
-        EINVAL,
-        "`field->value=%p` is already populated, cannot add `value=%p`\n",
-        field->value, value);
-    goto error_out;
+    free(field->value);
+    field->value = NULL;
   }
 
   err = cmc_alloc_field_value_int(value, &field->value);
