@@ -9,6 +9,9 @@ test_cmc_env_parser_exe = executable(
   ],
   dependencies: test_dependencies,
   include_directories: test_includes,
-  c_args: ['-DCONFIG_PATH="' + meson.current_source_dir() + '/config"'],  
+  c_args: ['-DCONFIG_PATH="' + meson.current_source_dir() + '/config"',
+           '-DARRAY_CONFIG_PATH="' + meson.current_source_dir() + '/array"'
+	   ],  
 )
 test('test_cmc_env_parser', test_cmc_env_parser_exe)
+

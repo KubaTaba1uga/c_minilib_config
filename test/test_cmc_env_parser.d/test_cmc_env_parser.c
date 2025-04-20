@@ -10,7 +10,11 @@
 #include "utils/cmc_field.h"
 
 #ifndef CONFIG_PATH
-#define CONFIG_PATH "akjskajsdhkahjd"
+#define CONFIG_PATH "non_exsistent_path"
+#endif
+
+#ifndef ARRAY_CONFIG_PATH
+#define ARRAY_CONFIG_PATH "non_exsistent_path"
 #endif
 
 static struct cmc_ConfigParseInterface parser;
@@ -96,4 +100,112 @@ void test_parse_valid_env_file(void) {
   err = cmc_field_get_str(field_empty, &out_empty);
   TEST_ASSERT_NULL(err);
   TEST_ASSERT_EQUAL_STRING("default_value", out_empty);
+}
+
+void test_parse_array_env_file(void) {
+  // 1) create config for directory ARRAY_CONFIG_PATH and base name "array"
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)ARRAY_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "array",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  // 2) empty_array: declare ARRAY of INT
+  struct cmc_ConfigField *f_empty_array, *f_empty_elem;
+  err = cmc_field_create("empty_array", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
+                         true, &f_empty_array);
+  TEST_ASSERT_NULL(err);
+  // nested INT descriptor
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_INT, NULL, true,
+                         &f_empty_elem);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_empty_array, f_empty_elem);
+  TEST_ASSERT_NULL(err);
+  err = cmc_config_add_field(f_empty_array, config);
+  TEST_ASSERT_NULL(err);
+
+  // 3) filled_array: same setup
+  struct cmc_ConfigField *f_filled_array, *f_filled_elem;
+  err = cmc_field_create("filled_array", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
+                         true, &f_filled_array);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_INT, NULL, true,
+                         &f_filled_elem);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_filled_array, f_filled_elem);
+  TEST_ASSERT_NULL(err);
+  err = cmc_config_add_field(f_filled_array, config);
+  TEST_ASSERT_NULL(err);
+
+  // 4) nested_array: ARRAY of ARRAY of INT
+  struct cmc_ConfigField *f_nested_array, *f_nested_row, *f_nested_cell;
+  err = cmc_field_create("nested_array", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
+                         true, &f_nested_array);
+  TEST_ASSERT_NULL(err);
+
+  // first level: rows (ARRAY)
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true,
+                         &f_nested_row);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_nested_array, f_nested_row);
+  TEST_ASSERT_NULL(err);
+  // second level: cells (INT)
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_INT, NULL, true,
+                         &f_nested_cell);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_nested_row, f_nested_cell);
+  TEST_ASSERT_NULL(err);
+  err = cmc_config_add_field(f_nested_array, config);
+  TEST_ASSERT_NULL(err);
+
+  // 5) parse
+  err =
+      parser.parse(strlen(ARRAY_CONFIG_PATH), ARRAY_CONFIG_PATH, NULL, config);
+  TEST_ASSERT_NULL(err);
+
+  // 6) check empty_array: first element should be optional 0, no next
+  struct cmc_ConfigField *elem = f_empty_array->value;
+  int out;
+  err = cmc_field_get_int(elem, &out);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_INT(0, out);
+  TEST_ASSERT_NULL(elem->next_field);
+
+  // 7) check filled_array: expect [0,1]
+  elem = f_filled_array->value;
+  err = cmc_field_get_int(elem, &out);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_INT(0, out);
+  elem = elem->next_field;
+  err = cmc_field_get_int(elem, &out);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_INT(1, out);
+  TEST_ASSERT_NULL(elem->next_field);
+
+  // 8) check nested_array: 2×2 matrix: [ [0,1], [10,11] ]
+  struct cmc_ConfigField *row = f_nested_array->value;
+  // row 0
+  struct cmc_ConfigField *cell = row->value;
+  err = cmc_field_get_int(cell, &out);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_INT(0, out);
+  cell = cell->next_field;
+  err = cmc_field_get_int(cell, &out);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_INT(1, out);
+  // row 1
+  row = row->next_field;
+  TEST_ASSERT_NOT_NULL(row);
+  cell = row->value;
+  TEST_ASSERT_NOT_NULL(cell);
+  err = cmc_field_get_int(cell, &out);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_INT(10, out);
+  cell = cell->next_field;
+  err = cmc_field_get_int(cell, &out);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_INT(11, out);
 }

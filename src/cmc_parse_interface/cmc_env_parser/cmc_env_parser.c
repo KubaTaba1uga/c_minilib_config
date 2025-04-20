@@ -159,18 +159,17 @@ _cmc_env_parser_parse_array_field(FILE *config_file,
   cmc_error_t err;
 
   if (!field->value) {
-    err = cmc_errorf(EINVAL,
-                     "Array field without specified value type is forbidden "
-                     "`field->name=%s`\n",
-                     field->name);
-    goto error_out;
+    return NULL;
   }
 
+  struct cmc_ConfigField *previous_subfield = NULL;
   subfield = field->value;
 
-  for (int32_t i = 0;; i++) {
+  for (int32_t i = 0; i < 3; i++) {
+
     memset(new_name_buffer, 0, new_name_max);
     snprintf(new_name_buffer, new_name_max - 1, "%s_%d", field->name, i);
+    puts(new_name_buffer);
     new_name_ptr = strdup(new_name_buffer);
     if (!new_name_ptr) {
       return cmc_errorf(ENOMEM, "Failed to strdup subfield name");
@@ -186,6 +185,10 @@ _cmc_env_parser_parse_array_field(FILE *config_file,
 
     // If there is no name_N there is no point in looking for name_N+1
     if (!subfield->value) {
+      if (previous_subfield) {
+        previous_subfield->next_field = NULL;
+        cmc_field_destroy(&subfield);
+      }
       break;
     }
 
@@ -197,6 +200,22 @@ _cmc_env_parser_parse_array_field(FILE *config_file,
       goto error_out;
     }
 
+    if (subfield->type == cmc_ConfigFieldTypeEnum_ARRAY) {
+      struct cmc_ConfigField *child_subfield;
+      err = cmc_field_create("",
+                             ((struct cmc_ConfigField *)subfield->value)->type,
+                             NULL, true, &child_subfield);
+      if (err) {
+        goto error_out;
+      }
+
+      err = cmc_field_add_nested_field(next_subfield, child_subfield);
+      if (err) {
+        goto error_out;
+      }
+    }
+
+    previous_subfield = subfield;
     subfield->next_field = next_subfield;
     subfield = next_subfield;
   }
