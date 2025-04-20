@@ -15,6 +15,7 @@
 #include "utils/cmc_string.h"
 
 static const char *cmc_env_parser_extension = ".env";
+
 static cmc_error_t _cmc_env_parser_parse_field(FILE *config_file,
                                                struct cmc_ConfigField *field);
 static cmc_error_t
@@ -24,6 +25,10 @@ static cmc_error_t
 _cmc_env_parser_parse_str_and_int_field(FILE *config_file,
                                         struct cmc_ConfigField *field);
 static char *_cmc_env_parser_create_array_name(char *name, int32_t i);
+static cmc_error_t _cmc_env_parser_parse_single_line(char *buffer,
+                                                     uint32_t buffer_max,
+                                                     char **env_name,
+                                                     char **env_value);
 
 static cmc_error_t _cmc_env_parser_create(cmc_ConfigParserData *data) {
   return NULL;
@@ -196,59 +201,32 @@ error_out:
 static cmc_error_t
 _cmc_env_parser_parse_str_and_int_field(FILE *config_file,
                                         struct cmc_ConfigField *field) {
-  const char delimeter = '=';
   const uint32_t single_line_max = 255;
   char single_line_buffer[single_line_max];
-  char *delimeter_ptr;
   cmc_error_t err;
 
   while (fgets(single_line_buffer, single_line_max, config_file) != NULL) {
     if (strlen(single_line_buffer) <= 1) {
       continue;
     }
-    delimeter_ptr = strchr(single_line_buffer, delimeter);
-    if (!delimeter_ptr) {
-      err = cmc_errorf(EINVAL, "No `delimeter=%c` found in `line=%s`\n",
-                       delimeter, single_line_buffer);
+
+    char *env_field_name;
+    char *env_field_value;
+    err = _cmc_env_parser_parse_single_line(single_line_buffer, single_line_max,
+                                            &env_field_name, &env_field_value);
+    if (err) {
+      if (err->code == ENODATA) {
+        cmc_error_destroy(&err);
+        continue;
+      }
       goto error_out;
     }
 
-    uint32_t env_field_name_len = delimeter_ptr - single_line_buffer;
-    char env_field_name[env_field_name_len + 1];
-    memset(env_field_name, 0, env_field_name_len + 1);
-    strncpy(env_field_name, single_line_buffer, env_field_name_len);
-
-    char *name_char;
-    CMC_FOREACH_PTR(name_char, env_field_name, strlen(env_field_name)) {
-      *name_char = (char)tolower((int)*name_char);
-    }
     printf("env_field_name=%s, field_name=%s\n", env_field_name, field->name);
     if (strcmp(field->name, env_field_name) == 0) {
-      // Once we have a match we need to add it's value
-      //   with respect to type and stop processing.
-      uint32_t env_field_value_len = strlen(delimeter_ptr + 1);
-      char env_field_value[env_field_value_len + 1];
-      strncpy(env_field_value, delimeter_ptr + 1, env_field_value_len);
-      env_field_value[env_field_value_len] = 0;
-
-      // If env has empty value we are considering it as non existsent
-      //  in config file.
-      if (env_field_value_len == 0) {
-        continue;
-      }
-
-      if (env_field_value[env_field_value_len - 1] == '\n') {
-        env_field_value[env_field_value_len - 1] = 0;
-      }
-
-      if (strlen(env_field_value) == 0) {
-        continue;
-      }
-
       if (field->value) {
         free(field->value);
       }
-
       field->value = NULL;
 
       switch (field->type) {
@@ -263,9 +241,19 @@ _cmc_env_parser_parse_str_and_int_field(FILE *config_file,
                          field->type);
       }
       if (err) {
+        free(env_field_name);
+        env_field_name = NULL;
+        free(env_field_value);
+        env_field_value = NULL;
+
         goto error_out;
       }
     }
+
+    free(env_field_name);
+    env_field_name = NULL;
+    free(env_field_value);
+    env_field_value = NULL;
   }
 
   if (!field->optional && !field->value) {
@@ -289,3 +277,65 @@ static char *_cmc_env_parser_create_array_name(char *name, int32_t i) {
 
   return strdup(buffer);
 };
+
+static cmc_error_t _cmc_env_parser_parse_single_line(char *buffer,
+                                                     uint32_t buffer_max,
+                                                     char **env_name,
+                                                     char **env_value) {
+  const char delimeter = '=';
+  char *delimeter_ptr;
+  cmc_error_t err;
+
+  delimeter_ptr = strchr(buffer, delimeter);
+  if (!delimeter_ptr) {
+    err = cmc_errorf(EINVAL, "No `delimeter=%c` found in `line=%s`\n",
+                     delimeter, buffer);
+    return err;
+  }
+
+  uint32_t env_field_name_len = delimeter_ptr - buffer;
+  char env_field_name[env_field_name_len + 1];
+  memset(env_field_name, 0, env_field_name_len + 1);
+  strncpy(env_field_name, buffer, env_field_name_len);
+
+  char *name_char;
+  CMC_FOREACH_PTR(name_char, env_field_name, strlen(env_field_name)) {
+    *name_char = (char)tolower((int)*name_char);
+  }
+
+  uint32_t env_field_value_len = strlen(delimeter_ptr + 1);
+  char env_field_value[env_field_value_len + 1];
+  strncpy(env_field_value, delimeter_ptr + 1, env_field_value_len);
+  env_field_value[env_field_value_len] = 0;
+
+  if (strlen(env_field_value) <= 1 || strlen(env_field_name) <= 1) {
+    err = cmc_errorf(ENODATA, "Unable to find value for `env_field_name=%s`",
+                     env_field_name);
+    return err;
+  }
+
+  if (env_field_value[env_field_value_len - 1] == '\n') {
+    env_field_value[env_field_value_len - 1] = 0;
+  }
+
+  *env_name = strdup(env_field_name);
+  if (!*env_name) {
+    err =
+        cmc_errorf(EINVAL, "Unable to allocate memory for `env_field_name=%s`",
+                   env_field_name);
+    return err;
+  }
+
+  *env_value = strdup(env_field_value);
+  if (!*env_value) {
+    err =
+        cmc_errorf(EINVAL, "Unable to allocate memory for `env_field_value=%s`",
+                   env_field_value);
+    goto error_out;
+  }
+
+  return NULL;
+
+error_out:
+  return err;
+}
