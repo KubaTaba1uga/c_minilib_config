@@ -61,8 +61,9 @@ static cmc_error_t _cmc_env_parser_parse(const size_t n, const char path[n],
   //     match we stop looking further.
   CMC_FIELD_ITER(field, config->fields) {
     err = _cmc_env_parser_parse_field(config_file, field);
+
     if (err) {
-      if (field->type == cmc_ConfigFieldTypeEnum_ARRAY && err->code == ENOENT) {
+      if (err->code == ENOENT && field->optional) {
         cmc_error_destroy(&err);
         continue;
       }
@@ -140,15 +141,13 @@ _cmc_env_parser_parse_array_field(FILE *config_file,
   struct cmc_ConfigField *prev_subfield = NULL;
   int32_t i = 0;
   while (true) {
-    if (i > 5) {
-      break;
-    }
     memset(new_name_buffer, 0, new_name_max);
     snprintf(new_name_buffer, new_name_max - 1, "%s_%d", field->name, i++);
     new_name_ptr = strdup(new_name_buffer);
     if (!new_name_ptr) {
       return cmc_errorf(ENOMEM, "Failed to strdup subfield name");
     }
+
     free(subfield->name);
     subfield->name = new_name_ptr;
 
@@ -207,6 +206,9 @@ _cmc_env_parser_parse_str_and_int_field(FILE *config_file,
   cmc_error_t err;
 
   while (fgets(single_line_buffer, single_line_max, config_file) != NULL) {
+    if (strlen(single_line_buffer) <= 1) {
+      continue;
+    }
     delimeter_ptr = strchr(single_line_buffer, delimeter);
     if (!delimeter_ptr) {
       err = cmc_errorf(EINVAL, "No `delimeter=%c` found in `line=%s`\n",
@@ -223,7 +225,7 @@ _cmc_env_parser_parse_str_and_int_field(FILE *config_file,
     CMC_FOREACH_PTR(name_char, env_field_name, strlen(env_field_name)) {
       *name_char = (char)tolower((int)*name_char);
     }
-
+    printf("env_field_name=%s, field_name=%s\n", env_field_name, field->name);
     if (strcmp(field->name, env_field_name) == 0) {
       // Once we have a match we need to add it's value
       //   with respect to type and stop processing.

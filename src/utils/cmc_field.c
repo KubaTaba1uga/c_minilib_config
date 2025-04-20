@@ -89,6 +89,7 @@ cmc_error_t cmc_field_add_nested_field(struct cmc_ConfigField *field,
 
   switch (field->type) {
   case cmc_ConfigFieldTypeEnum_ARRAY:
+    child_field->optional = field->optional;
     break;
   default:
     err = cmc_errorf(EINVAL, "`field->type=%d` cannot be used as container\n",

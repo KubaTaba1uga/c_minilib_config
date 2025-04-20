@@ -1,0 +1,8 @@
+{
+  "envs": ["dev", "staging", "prod"],
+  "max_connections": 1000,
+  "retry_delays": [1, 2, 5],
+  "clusters": [[[[["cannary"], "blue"], "indygo"]]],
+  "time_windows": [["08:00", "12:00"], ["14:00", "18:00"]],
+  "enable_metrics": 1
+}

@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,6 +16,10 @@
 
 #ifndef ARRAY_CONFIG_PATH
 #define ARRAY_CONFIG_PATH "non_exsistent_path"
+#endif
+
+#ifndef ARRAY_NESTED_CONFIG_PATH
+#define ARRAY_NESTED_CONFIG_PATH "non_exsistent_path"
 #endif
 
 static struct cmc_ConfigParseInterface parser;
@@ -211,3 +216,253 @@ void test_parse_array_env_file(void) {
   TEST_ASSERT_NULL(err);
   TEST_ASSERT_EQUAL_INT(11, out);
 }
+
+void test_required_array_without_default_should_fail(void) {
+  // Setup config for nonexistent input
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)ARRAY_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "array",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  // Declare required array of integers (no default)
+  struct cmc_ConfigField *f_required_array, *f_elem;
+  err = cmc_field_create("required_array", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
+                         false, &f_required_array);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_INT, NULL, false,
+                         &f_elem); // required element
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_add_nested_field(f_required_array, f_elem);
+  TEST_ASSERT_NULL(err);
+  err = cmc_config_add_field(f_required_array, config);
+  TEST_ASSERT_NULL(err);
+
+  // Parse: expect error due to missing required array entries
+  err =
+      parser.parse(strlen(ARRAY_CONFIG_PATH), ARRAY_CONFIG_PATH, NULL, config);
+  TEST_ASSERT_NOT_NULL(err);
+  TEST_ASSERT_EQUAL_INT(ENOENT, err->code);
+}
+
+void test_required_array_without_default_should_fail_always(void) {
+  // Setup config for nonexistent input
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)ARRAY_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "array",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  // Declare required array of integers (no default)
+  struct cmc_ConfigField *f_required_array, *f_elem;
+  err = cmc_field_create("required_array", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
+                         false, &f_required_array);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_INT, NULL, true,
+                         &f_elem); // required element
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_add_nested_field(f_required_array, f_elem);
+  TEST_ASSERT_NULL(err);
+  err = cmc_config_add_field(f_required_array, config);
+  TEST_ASSERT_NULL(err);
+
+  // Parse: expect error due to missing required array entries
+  err =
+      parser.parse(strlen(ARRAY_CONFIG_PATH), ARRAY_CONFIG_PATH, NULL, config);
+  TEST_ASSERT_NOT_NULL(err);
+  TEST_ASSERT_EQUAL_INT(ENOENT, err->code);
+}
+
+/* void test_array_nested_env_config(void) { */
+/*   err = cmc_config_create( */
+/*       &(struct cmc_ConfigSettings){ */
+/*           .supported_paths = (char *[]){(char *)ARRAY_NESTED_CONFIG_PATH}, */
+/*           .paths_length = 1, */
+/*           .name = "array_nested", */
+/*           .log_func = NULL}, */
+/*       &config); */
+/*   TEST_ASSERT_NULL(err); */
+
+/*   // envs */
+/*   struct cmc_ConfigField *f_envs, *f_envs_elem; */
+/*   err = cmc_field_create("envs", cmc_ConfigFieldTypeEnum_ARRAY, NULL, false,
+ */
+/*                          &f_envs); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_field_create("", cmc_ConfigFieldTypeEnum_STRING, NULL, false, */
+/*                          &f_envs_elem); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_field_add_nested_field(f_envs, f_envs_elem); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_config_add_field(f_envs, config); */
+/*   TEST_ASSERT_NULL(err); */
+
+/*   // max_connections */
+/*   struct cmc_ConfigField *f_max; */
+/*   err = cmc_field_create("max_connections", cmc_ConfigFieldTypeEnum_INT,
+ * NULL, */
+/*                          false, &f_max); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_config_add_field(f_max, config); */
+/*   TEST_ASSERT_NULL(err); */
+
+/*   // retry_delays */
+/*   struct cmc_ConfigField *f_retries, *f_retries_elem; */
+/*   err = cmc_field_create("retry_delays", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
+ */
+/*                          false, &f_retries); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_field_create("", cmc_ConfigFieldTypeEnum_INT, NULL, false, */
+/*                          &f_retries_elem); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_field_add_nested_field(f_retries, f_retries_elem); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_config_add_field(f_retries, config); */
+/*   TEST_ASSERT_NULL(err); */
+
+/*   // clusters: 5-level nested string */
+/*   struct cmc_ConfigField *f_clusters, *lvl1, *lvl2, *lvl3, *lvl4; */
+/*   err = cmc_field_create("clusters", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
+ * false, */
+/*                          &f_clusters); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_field_create("", cmc_ConfigFieldTypeEnum_ARRAY, NULL, false,
+ * &lvl1); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_field_create("", cmc_ConfigFieldTypeEnum_ARRAY, NULL, false,
+ * &lvl2); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_field_create("", cmc_ConfigFieldTypeEnum_ARRAY, NULL, false,
+ * &lvl3); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = */
+/*       cmc_field_create("", cmc_ConfigFieldTypeEnum_STRING, NULL, false,
+ * &lvl4); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_field_add_nested_field(lvl3, lvl4); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_field_add_nested_field(lvl2, lvl3); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_field_add_nested_field(lvl1, lvl2); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_field_add_nested_field(f_clusters, lvl1); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_config_add_field(f_clusters, config); */
+/*   TEST_ASSERT_NULL(err); */
+
+/*   // time_windows */
+/*   struct cmc_ConfigField *f_windows, *f_row, *f_cell; */
+/*   err = cmc_field_create("time_windows", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
+ */
+/*                          false, &f_windows); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = */
+/*       cmc_field_create("", cmc_ConfigFieldTypeEnum_ARRAY, NULL, false,
+ * &f_row); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_field_create("", cmc_ConfigFieldTypeEnum_STRING, NULL, false, */
+/*                          &f_cell); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_field_add_nested_field(f_row, f_cell); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_field_add_nested_field(f_windows, f_row); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_config_add_field(f_windows, config); */
+/*   TEST_ASSERT_NULL(err); */
+
+/*   // enable_metrics */
+/*   struct cmc_ConfigField *f_metrics; */
+/*   err = cmc_field_create("enable_metrics", cmc_ConfigFieldTypeEnum_INT, NULL,
+ */
+/*                          false, &f_metrics); */
+/*   TEST_ASSERT_NULL(err); */
+/*   err = cmc_config_add_field(f_metrics, config); */
+/*   TEST_ASSERT_NULL(err); */
+
+/*   // Parse */
+/*   err = parser.parse(strlen(ARRAY_NESTED_CONFIG_PATH),
+ * ARRAY_NESTED_CONFIG_PATH, */
+/*                      NULL, config); */
+/*   puts(err->msg); */
+/*   TEST_ASSERT_NULL(err); */
+
+/*   // Validate envs */
+/*   const char *expected_envs[] = {"dev", "staging", "prod"}; */
+/*   struct cmc_ConfigField *it = f_envs->value; */
+/*   for (int i = 0; i < 3; ++i) { */
+/*     char *val = NULL; */
+/*     TEST_ASSERT_NOT_NULL(it); */
+/*     err = cmc_field_get_str(it, &val); */
+/*     TEST_ASSERT_NULL(err); */
+/*     TEST_ASSERT_EQUAL_STRING(expected_envs[i], val); */
+/*     it = it->next_field; */
+/*   } */
+
+/*   // Validate retry_delays */
+/*   int expected_retries[] = {1, 2, 5}; */
+/*   it = f_retries->value; */
+/*   for (int i = 0; i < 3; ++i) { */
+/*     int val = -1; */
+/*     TEST_ASSERT_NOT_NULL(it); */
+/*     err = cmc_field_get_int(it, &val); */
+/*     TEST_ASSERT_NULL(err); */
+/*     TEST_ASSERT_EQUAL_INT(expected_retries[i], val); */
+/*     it = it->next_field; */
+/*   } */
+
+/*   // Validate max_connections */
+/*   int val = -1; */
+/*   err = cmc_field_get_int(f_max, &val); */
+/*   TEST_ASSERT_NULL(err); */
+/*   TEST_ASSERT_EQUAL_INT(1000, val); */
+
+/*   // Validate enable_metrics */
+/*   err = cmc_field_get_int(f_metrics, &val); */
+/*   TEST_ASSERT_NULL(err); */
+/*   TEST_ASSERT_EQUAL_INT(1, val); */
+
+/*   // Validate time_windows */
+/*   const char *expected_windows[2][2] = {{"08:00", "12:00"}, {"14:00",
+ * "18:00"}}; */
+/*   struct cmc_ConfigField *row = f_windows->value; */
+/*   for (int i = 0; i < 2; ++i) { */
+/*     TEST_ASSERT_NOT_NULL(row); */
+/*     struct cmc_ConfigField *cell = row->value; */
+/*     for (int j = 0; j < 2; ++j) { */
+/*       TEST_ASSERT_NOT_NULL(cell); */
+/*       char *val_s = NULL; */
+/*       err = cmc_field_get_str(cell, &val_s); */
+/*       TEST_ASSERT_NULL(err); */
+/*       TEST_ASSERT_EQUAL_STRING(expected_windows[i][j], val_s); */
+/*       cell = cell->next_field; */
+/*     } */
+/*     row = row->next_field; */
+/*   } */
+
+/*   // Validate clusters */
+/*   const char *expected_cluster = "cannary"; */
+/*   struct cmc_ConfigField *l1 = f_clusters->value; */
+/*   TEST_ASSERT_NOT_NULL(l1); */
+/*   struct cmc_ConfigField *l2 = l1->value; */
+/*   TEST_ASSERT_NOT_NULL(l2); */
+/*   struct cmc_ConfigField *l3 = l2->value; */
+/*   TEST_ASSERT_NOT_NULL(l3); */
+/*   struct cmc_ConfigField *l4 = l3->value; */
+/*   TEST_ASSERT_NOT_NULL(l4); */
+/*   struct cmc_ConfigField *l5 = l4->value; */
+/*   TEST_ASSERT_NOT_NULL(l5); */
+/*   char *out_s = NULL; */
+/*   err = cmc_field_get_str(l5, &out_s); */
+/*   TEST_ASSERT_NULL(err); */
+/*   TEST_ASSERT_EQUAL_STRING(expected_cluster, out_s); */
+/* } */
