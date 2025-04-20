@@ -56,9 +56,8 @@ struct cmc_ConfigField {
   char *name;
   void *value;
   bool optional;
-  void *default_value;
-  enum cmc_ConfigFieldTypeEnum type;
   void *next_field;
+  enum cmc_ConfigFieldTypeEnum type;
 };
 
 // This function allocates memory, there is no destruct because all

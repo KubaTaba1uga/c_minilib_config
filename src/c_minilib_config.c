@@ -83,8 +83,9 @@ void cmc_config_destroy(struct cmc_Config **config) {
   struct cmc_ConfigField *field = (*config)->fields;
   while (field) {
     struct cmc_ConfigField *next = field->next_field;
-    cmc_field_destroy(&field); /* this NULLs (field) */
+    struct cmc_ConfigField *to_destroy = field;
     field = next;
+    cmc_field_destroy(&to_destroy);
   }
 
   free(*config);

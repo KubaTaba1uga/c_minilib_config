@@ -44,7 +44,8 @@ void test_field_create_string_with_default(void) {
   TEST_ASSERT_EQUAL_STRING("my_field", field->name);
   TEST_ASSERT_TRUE(field->optional);
   TEST_ASSERT_EQUAL_INT(cmc_ConfigFieldTypeEnum_STRING, field->type);
-  TEST_ASSERT_EQUAL_STRING("default", (char *)field->default_value);
+  TEST_ASSERT_NOT_NULL(field->value);
+  TEST_ASSERT_EQUAL_STRING("default", (char *)field->value);
 }
 
 void test_field_add_string_value(void) {
@@ -71,8 +72,8 @@ void test_field_create_int_with_default(void) {
   err =
       cmc_field_create("port", cmc_ConfigFieldTypeEnum_INT, &val, true, &field);
   TEST_ASSERT_NULL(err);
-  TEST_ASSERT_NOT_NULL(field->default_value);
-  TEST_ASSERT_EQUAL_INT(val, *(int32_t *)field->default_value);
+  TEST_ASSERT_NOT_NULL(field->value);
+  TEST_ASSERT_EQUAL_INT(val, *(int32_t *)field->value);
 }
 
 void test_field_add_int_value(void) {
