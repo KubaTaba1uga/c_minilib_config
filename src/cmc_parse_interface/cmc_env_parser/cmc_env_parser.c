@@ -23,6 +23,7 @@ _cmc_env_parser_parse_array_field(FILE *config_file,
 static cmc_error_t
 _cmc_env_parser_parse_str_and_int_field(FILE *config_file,
                                         struct cmc_ConfigField *field);
+static char *_cmc_env_parser_create_array_name(char *name, int32_t i);
 
 static cmc_error_t _cmc_env_parser_create(cmc_ConfigParserData *data) {
   return NULL;
@@ -128,8 +129,6 @@ cmc_error_t cmc_env_parser_init(struct cmc_ConfigParseInterface *parser) {
 static cmc_error_t
 _cmc_env_parser_parse_array_field(FILE *config_file,
                                   struct cmc_ConfigField *field) {
-  const uint32_t new_name_max = 255;
-  char new_name_buffer[new_name_max];
   char *new_name_ptr;
   cmc_error_t err;
 
@@ -141,17 +140,15 @@ _cmc_env_parser_parse_array_field(FILE *config_file,
   struct cmc_ConfigField *prev_subfield = NULL;
   int32_t i = 0;
   while (true) {
-    memset(new_name_buffer, 0, new_name_max);
-    snprintf(new_name_buffer, new_name_max - 1, "%s_%d", field->name, i++);
-    new_name_ptr = strdup(new_name_buffer);
+    new_name_ptr = _cmc_env_parser_create_array_name(field->name, i++);
     if (!new_name_ptr) {
       return cmc_errorf(ENOMEM, "Failed to strdup subfield name");
     }
+    puts(new_name_ptr);
 
     free(subfield->name);
     subfield->name = new_name_ptr;
 
-    puts(subfield->name);
     err = _cmc_env_parser_parse_field(config_file, subfield);
     if (err) {
       goto error_out;
@@ -282,3 +279,13 @@ _cmc_env_parser_parse_str_and_int_field(FILE *config_file,
 error_out:
   return err;
 }
+
+static char *_cmc_env_parser_create_array_name(char *name, int32_t i) {
+  const uint32_t n = 255;
+  char buffer[n];
+
+  memset(buffer, 0, n);
+  snprintf(buffer, n, "%s_%d", name, i);
+
+  return strdup(buffer);
+};
