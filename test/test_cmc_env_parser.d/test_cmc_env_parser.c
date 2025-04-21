@@ -461,3 +461,77 @@ void test_double_nested_array_parsing(void) {
     lvl1 = lvl1->next_field;
   }
 }
+
+void test_optional_field_from_dict_env(void) {
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)DICT_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "dict",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  struct cmc_ConfigField *field;
+  err = cmc_field_create("optional", cmc_ConfigFieldTypeEnum_STRING,
+                         "default_val", true, &field);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_config_add_field(field, config);
+  TEST_ASSERT_NULL(err);
+
+  err = parser.parse(strlen(DICT_CONFIG_PATH), DICT_CONFIG_PATH, NULL, config);
+  TEST_ASSERT_NULL(err);
+
+  char *out_val = NULL;
+  err = cmc_field_get_str(field, &out_val);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_STRING("default_val", out_val);
+}
+
+void test_optional_dict_fields_dict_name_and_dict_age(void) {
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)ARRAY_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "dict",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  struct cmc_ConfigField *f_dict, *f_name, *f_age;
+
+  err = cmc_field_create("dict", cmc_ConfigFieldTypeEnum_DICT, NULL, true,
+                         &f_dict);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_create("name", cmc_ConfigFieldTypeEnum_STRING, "<none>", true,
+                         &f_name);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_dict, f_name);
+  TEST_ASSERT_NULL(err);
+
+  err =
+      cmc_field_create("age", cmc_ConfigFieldTypeEnum_INT, NULL, true, &f_age);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_next_field(f_name, f_age);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_config_add_field(f_dict, config);
+  TEST_ASSERT_NULL(err);
+
+  err =
+      parser.parse(strlen(ARRAY_CONFIG_PATH), ARRAY_CONFIG_PATH, NULL, config);
+  TEST_ASSERT_NULL(err);
+
+  char *out_name = NULL;
+  int out_age = -1;
+
+  err = cmc_field_get_str(f_name, &out_name);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_STRING("john", out_name);
+
+  err = cmc_field_get_int(f_age, &out_age);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_INT(99, out_age);
+}

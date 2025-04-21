@@ -21,9 +21,12 @@ static cmc_error_t _cmc_env_parser_parse_field(FILE *config_file,
                                                bool *found_value);
 static cmc_error_t _cmc_env_parser_parse_array_field(
     FILE *config_file, struct cmc_ConfigField *field, bool *found_value);
+static cmc_error_t _cmc_env_parser_parse_dict_field(
+    FILE *config_file, struct cmc_ConfigField *field, bool *found_value);
 static cmc_error_t _cmc_env_parser_parse_str_and_int_field(
     FILE *config_file, struct cmc_ConfigField *field, bool *found_value);
 static char *_cmc_env_parser_create_array_name(char *name, int32_t i);
+static char *_cmc_env_parser_create_dict_name(char *dict_name, char *key);
 static cmc_error_t _cmc_env_parser_parse_single_line(char *buffer,
                                                      uint32_t buffer_max,
                                                      char **env_name,
@@ -108,12 +111,15 @@ static cmc_error_t _cmc_env_parser_parse_field(FILE *config_file,
     if (err) {
       goto error_out;
     }
-  }
+  } else if (field->type == cmc_ConfigFieldTypeEnum_DICT) {
+    err = _cmc_env_parser_parse_dict_field(config_file, field, found_value);
+    if (err) {
+      goto error_out;
+    }
+  } else if (field->type == cmc_ConfigFieldTypeEnum_STRING ||
+             field->type == cmc_ConfigFieldTypeEnum_INT) {
+    fseek(config_file, 0, SEEK_SET);
 
-  fseek(config_file, 0, SEEK_SET);
-
-  if (field->type == cmc_ConfigFieldTypeEnum_STRING ||
-      field->type == cmc_ConfigFieldTypeEnum_INT) {
     err = _cmc_env_parser_parse_str_and_int_field(config_file, field,
                                                   found_value);
     if (err) {
@@ -204,6 +210,49 @@ error_out:
   return err;
 }
 
+static cmc_error_t _cmc_env_parser_parse_dict_field(
+    FILE *config_file, struct cmc_ConfigField *field, bool *found_value) {
+  cmc_error_t err;
+
+  struct cmc_ConfigField *key_value_pair = field->value;
+  while (key_value_pair) {
+    char *new_name_ptr, *old_name_ptr = key_value_pair->name;
+
+    new_name_ptr =
+        _cmc_env_parser_create_dict_name(field->name, key_value_pair->name);
+    if (!new_name_ptr) {
+      return cmc_errorf(ENOMEM, "Failed to strdup subfield name");
+    }
+
+    key_value_pair->name = new_name_ptr;
+
+    bool local_found_value = false;
+    err = _cmc_env_parser_parse_field(config_file, key_value_pair,
+                                      &local_found_value);
+    key_value_pair->name = old_name_ptr;
+    free(new_name_ptr);
+    if (err) {
+      goto error_out;
+    }
+
+    if (!local_found_value) {
+      if (key_value_pair != field->value) {
+        *found_value = true;
+      } else {
+        *found_value = false;
+      }
+      break;
+    }
+
+    key_value_pair = key_value_pair->next_field;
+  }
+
+  return NULL;
+
+error_out:
+  return err;
+}
+
 static cmc_error_t _cmc_env_parser_parse_str_and_int_field(
     FILE *config_file, struct cmc_ConfigField *field, bool *found_value) {
   const uint32_t single_line_max = 255;
@@ -232,6 +281,7 @@ static cmc_error_t _cmc_env_parser_parse_str_and_int_field(
       if (field->value) {
         free(field->value);
       }
+
       field->value = NULL;
 
       switch (field->type) {
@@ -272,11 +322,21 @@ error_out:
 }
 
 static char *_cmc_env_parser_create_array_name(char *name, int32_t i) {
-  const uint32_t n = 255;
-  char buffer[n];
+  const uint32_t buffer_max = 255;
+  char buffer[buffer_max];
 
-  memset(buffer, 0, n);
-  snprintf(buffer, n, "%s_%d", name, i);
+  memset(buffer, 0, buffer_max);
+  snprintf(buffer, buffer_max, "%s_%d", name, i);
+
+  return strdup(buffer);
+};
+
+static char *_cmc_env_parser_create_dict_name(char *dict_name, char *key) {
+  const uint32_t buffer_max = 255;
+  char buffer[buffer_max];
+
+  memset(buffer, 0, buffer_max);
+  snprintf(buffer, buffer_max, "%s_%s", dict_name, key);
 
   return strdup(buffer);
 };

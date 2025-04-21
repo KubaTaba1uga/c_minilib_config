@@ -162,7 +162,8 @@ void cmc_field_destroy(struct cmc_ConfigField **field) {
 
   struct cmc_ConfigField *ptr = *field;
 
-  if (ptr->type == cmc_ConfigFieldTypeEnum_ARRAY && ptr->value) {
+  if (ptr->value && (ptr->type == cmc_ConfigFieldTypeEnum_ARRAY ||
+                     ptr->type == cmc_ConfigFieldTypeEnum_DICT)) {
     struct cmc_ConfigField *nested_field = ptr->value;
     while (nested_field) {
       struct cmc_ConfigField *next = nested_field->next_field;
