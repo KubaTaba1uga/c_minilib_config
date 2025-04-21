@@ -403,8 +403,9 @@ static cmc_error_t _cmc_field_deep_clone(struct cmc_ConfigField *src,
 
   struct cmc_ConfigField *copy = NULL;
   err = cmc_field_create(src->name, src->type, NULL, src->optional, &copy);
-  if (err)
+  if (err) {
     return err;
+  }
 
   // Deep clone nested fields
   if (src->value && (src->type == cmc_ConfigFieldTypeEnum_ARRAY ||
@@ -416,8 +417,23 @@ static cmc_error_t _cmc_field_deep_clone(struct cmc_ConfigField *src,
       return err;
     }
     copy->value = cloned_value;
+
+    goto out;
   }
 
+  // Only atomic types here
+  CMC_FIELD_ITER(next_field, src) {
+    struct cmc_ConfigField *next_copy;
+    err = cmc_field_create(next_field->name, next_field->type, NULL,
+                           next_field->optional, &next_copy);
+    if (err) {
+      return err;
+    }
+
+    copy->next_field = next_copy;
+  }
+
+out:
   *dst = copy;
   return NULL;
 }
