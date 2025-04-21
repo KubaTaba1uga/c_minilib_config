@@ -520,8 +520,7 @@ void test_optional_dict_fields_dict_name_and_dict_age(void) {
   err = cmc_config_add_field(f_dict, config);
   TEST_ASSERT_NULL(err);
 
-  err =
-      parser.parse(strlen(ARRAY_CONFIG_PATH), ARRAY_CONFIG_PATH, NULL, config);
+  err = parser.parse(strlen(DICT_CONFIG_PATH), DICT_CONFIG_PATH, NULL, config);
   TEST_ASSERT_NULL(err);
 
   char *out_name = NULL;
