@@ -28,6 +28,8 @@ static cmc_error_t _cmc_env_parser_parse_single_line(char *buffer,
                                                      uint32_t buffer_max,
                                                      char **env_name,
                                                      char **env_value);
+static cmc_error_t _cmc_field_deep_clone(struct cmc_ConfigField *src,
+                                         struct cmc_ConfigField **dst);
 
 static cmc_error_t _cmc_env_parser_create(cmc_ConfigParserData *data) {
   return NULL;
@@ -98,7 +100,8 @@ static cmc_error_t _cmc_env_parser_parse_field(FILE *config_file,
                                                struct cmc_ConfigField *field,
                                                bool *found_value) {
   cmc_error_t err;
-  printf("Parsing name=%s, found=%d\n", field->name, *found_value);
+  printf("Parsing name=%s, type=%d, found=%d\n", field->name, field->type,
+         *found_value);
 
   if (field->type == cmc_ConfigFieldTypeEnum_ARRAY) {
     err = _cmc_env_parser_parse_array_field(config_file, field, found_value);
@@ -118,7 +121,8 @@ static cmc_error_t _cmc_env_parser_parse_field(FILE *config_file,
     }
   }
 
-  printf("Parsed name=%s, found=%d\n", field->name, *found_value);
+  printf("Parsed name=%s, type=%d, found=%d\n", field->name, field->type,
+         *found_value);
 
   return NULL;
 
@@ -148,6 +152,7 @@ static cmc_error_t _cmc_env_parser_parse_array_field(
   struct cmc_ConfigField *prev_subfield = NULL;
   int32_t i = 0;
   while (subfield) {
+
     struct cmc_ConfigField *next_subfield = NULL;
 
     char *new_name_ptr;
@@ -171,18 +176,21 @@ static cmc_error_t _cmc_env_parser_parse_array_field(
 
     printf(" _cmc_env_parser_parse_array_field, found_value=%d\n",
            local_found_value);
-    *found_value = local_found_value;
+
     // If value not found we stop looking further
     if (!local_found_value) {
       if (prev_subfield) {
         prev_subfield->next_field = NULL;
       }
 
-      // We are not cleening up first nodes
-      if (i > 1) {
+      // This gets triggered if array is not empty
+      if (i - 1 > 0) {
+        // We are only cleaning up fields that we made.
         cmc_field_destroy(&subfield);
-      }
 
+        // because array is not empty we set up found_value to true
+        *found_value = true;
+      }
       break;
     }
 
@@ -192,25 +200,17 @@ static cmc_error_t _cmc_env_parser_parse_array_field(
       goto error_out;
     }
 
-    if (subfield && subfield->value &&
-        subfield->type == cmc_ConfigFieldTypeEnum_ARRAY) {
-      struct cmc_ConfigField *nested_subfield = subfield->value;
-      err = cmc_field_create(nested_subfield->name, nested_subfield->type, NULL,
-                             false, &nested_subfield);
+    if (subfield->value && subfield->type == cmc_ConfigFieldTypeEnum_ARRAY) {
+      err = _cmc_field_deep_clone(
+          subfield->value, (struct cmc_ConfigField **)&next_subfield->value);
       if (err) {
         goto error_out;
       }
-
-      next_subfield->value = nested_subfield;
     }
 
     prev_subfield = subfield;
     subfield->next_field = next_subfield;
     subfield = next_subfield;
-  }
-
-  if (i != 1) {
-    *found_value = true;
   }
 
   return NULL;
@@ -356,4 +356,28 @@ static cmc_error_t _cmc_env_parser_parse_single_line(char *buffer,
 
 error_out:
   return err;
+}
+
+static cmc_error_t _cmc_field_deep_clone(struct cmc_ConfigField *src,
+                                         struct cmc_ConfigField **dst) {
+  cmc_error_t err;
+
+  struct cmc_ConfigField *copy = NULL;
+  err = cmc_field_create(src->name, src->type, NULL, src->optional, &copy);
+  if (err)
+    return err;
+
+  // Deep clone nested fields
+  if (src->value && src->type == cmc_ConfigFieldTypeEnum_ARRAY) {
+    struct cmc_ConfigField *cloned_value = NULL;
+    err = _cmc_field_deep_clone(src->value, &cloned_value);
+    if (err) {
+      cmc_field_destroy(&copy);
+      return err;
+    }
+    copy->value = cloned_value;
+  }
+
+  *dst = copy;
+  return NULL;
 }

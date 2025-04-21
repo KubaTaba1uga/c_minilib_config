@@ -107,7 +107,7 @@ void test_parse_valid_env_file(void) {
   TEST_ASSERT_EQUAL_STRING("default_value", out_empty);
 }
 
-void test_parse_array_env_file(void) {
+void __test_parse_array_env_file(void) {
   // 1) create config for directory ARRAY_CONFIG_PATH and base name "array"
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
@@ -283,4 +283,181 @@ void __test_required_array_without_default_should_fail_always(void) {
       parser.parse(strlen(ARRAY_CONFIG_PATH), ARRAY_CONFIG_PATH, NULL, config);
   TEST_ASSERT_NOT_NULL(err);
   TEST_ASSERT_EQUAL_INT(ENOENT, err->code);
+}
+void test_optional_array_parsing(void) {
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)ARRAY_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "array",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  struct cmc_ConfigField *f_array, *f_elem;
+  err = cmc_field_create("optional_array", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
+                         true, &f_array);
+  TEST_ASSERT_NULL(err);
+  err =
+      cmc_field_create("", cmc_ConfigFieldTypeEnum_STRING, NULL, true, &f_elem);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_array, f_elem);
+  TEST_ASSERT_NULL(err);
+  err = cmc_config_add_field(f_array, config);
+  TEST_ASSERT_NULL(err);
+
+  err =
+      parser.parse(strlen(ARRAY_CONFIG_PATH), ARRAY_CONFIG_PATH, NULL, config);
+  TEST_ASSERT_NULL(err);
+
+  TEST_ASSERT_NOT_NULL(f_array->value); // Array contain it's type specification
+  TEST_ASSERT_NULL(f_elem->value);      // But element value is NULL
+  TEST_ASSERT_NULL(f_elem->next_field); // And it doesn't hold more values
+}
+
+void test_flat_array_parsing(void) {
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)ARRAY_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "array",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  struct cmc_ConfigField *f_array, *f_elem;
+  err = cmc_field_create("flat_array", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
+                         true, &f_array);
+  TEST_ASSERT_NULL(err);
+  err =
+      cmc_field_create("", cmc_ConfigFieldTypeEnum_STRING, NULL, true, &f_elem);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_array, f_elem);
+  TEST_ASSERT_NULL(err);
+  err = cmc_config_add_field(f_array, config);
+  TEST_ASSERT_NULL(err);
+
+  err =
+      parser.parse(strlen(ARRAY_CONFIG_PATH), ARRAY_CONFIG_PATH, NULL, config);
+  TEST_ASSERT_NULL(err);
+
+  const char *expected[] = {"a", "b", "c", "d"};
+  struct cmc_ConfigField *elem = f_array->value;
+  for (int i = 0; i < 4; i++) {
+    TEST_ASSERT_NOT_NULL(elem);
+    char *out = NULL;
+    err = cmc_field_get_str(elem, &out);
+    TEST_ASSERT_NULL(err);
+    TEST_ASSERT_EQUAL_STRING(expected[i], out);
+    elem = elem->next_field;
+  }
+  TEST_ASSERT_NULL(elem);
+}
+
+void test_nested_array_parsing(void) {
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)ARRAY_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "array",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  struct cmc_ConfigField *f_outer, *f_inner, *f_int;
+  err = cmc_field_create("nested_array", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
+                         true, &f_outer);
+  TEST_ASSERT_NULL(err);
+  err =
+      cmc_field_create("", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true, &f_inner);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_INT, NULL, true, &f_int);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_outer, f_inner);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_inner, f_int);
+  TEST_ASSERT_NULL(err);
+  err = cmc_config_add_field(f_outer, config);
+  TEST_ASSERT_NULL(err);
+
+  err =
+      parser.parse(strlen(ARRAY_CONFIG_PATH), ARRAY_CONFIG_PATH, NULL, config);
+  TEST_ASSERT_NULL(err);
+
+  int expected[2][2] = {{0, 1}, {10, 11}};
+  struct cmc_ConfigField *row = f_outer->value;
+  for (int i = 0; i < 2; i++) {
+    TEST_ASSERT_NOT_NULL(row);
+    struct cmc_ConfigField *cell = row->value;
+    for (int j = 0; j < 2; j++) {
+      TEST_ASSERT_NOT_NULL(cell);
+      int val = -1;
+      err = cmc_field_get_int(cell, &val);
+      TEST_ASSERT_NULL(err);
+      TEST_ASSERT_EQUAL_INT(expected[i][j], val);
+      cell = cell->next_field;
+    }
+    TEST_ASSERT_NULL(cell);
+    row = row->next_field;
+  }
+  TEST_ASSERT_NULL(row);
+}
+
+void test_double_nested_array_parsing(void) {
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)ARRAY_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "array",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  struct cmc_ConfigField *outer, *mid, *inner;
+  err = cmc_field_create("double_nested_array", cmc_ConfigFieldTypeEnum_ARRAY,
+                         NULL, true, &outer);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true, &mid);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true, &inner);
+  TEST_ASSERT_NULL(err);
+
+  struct cmc_ConfigField *leaf;
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_INT, NULL, true, &leaf);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_add_nested_field(inner, leaf);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(mid, inner);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(outer, mid);
+  TEST_ASSERT_NULL(err);
+  err = cmc_config_add_field(outer, config);
+  TEST_ASSERT_NULL(err);
+
+  err =
+      parser.parse(strlen(ARRAY_CONFIG_PATH), ARRAY_CONFIG_PATH, NULL, config);
+  TEST_ASSERT_NULL(err);
+
+  int expected[2][3][3] = {{{0, 1, 2}, {10, 11}}, {{100}, {110}, {120}}};
+
+  struct cmc_ConfigField *lvl1 = outer->value;
+  for (int i = 0; i < 2; i++) {
+    TEST_ASSERT_NOT_NULL(lvl1);
+    struct cmc_ConfigField *lvl2 = lvl1->value;
+    for (int j = 0; j < 3; j++) {
+      if (!lvl2)
+        break;
+      struct cmc_ConfigField *lvl3 = lvl2->value;
+      for (int k = 0; k < 3 && lvl3; k++) {
+        int val;
+        err = cmc_field_get_int(lvl3, &val);
+        TEST_ASSERT_NULL(err);
+        TEST_ASSERT_EQUAL_INT(expected[i][j][k], val);
+        lvl3 = lvl3->next_field;
+      }
+      lvl2 = lvl2->next_field;
+    }
+    lvl1 = lvl1->next_field;
+  }
 }
