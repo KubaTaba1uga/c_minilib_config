@@ -1,0 +1,35 @@
+{
+	"Dhcp4": {
+		"interfaces_config": {
+			"interfaces": [
+				"eth0"
+			]
+		},
+		"lease_database": {
+			"type": "memfile",
+			"persist": true,
+			"name": "/var/lib/kea/dhcp4.leases"
+		},
+		"subnet4": [
+			{
+				"subnet": "192.168.1.0/24",
+				"pools": [
+					{
+						"pool": "192.168.1.100 - 192.168.1.200"
+					}
+				],
+				"option_data": [
+					{
+						"name": "routers",
+						"data": "192.168.1.1"
+					},
+					{
+						"name": "domain_name_servers",
+						"data": "8.8.8.8"
+					}
+				]
+			}
+		],
+		"valid_lifetime": 3600
+	}
+}

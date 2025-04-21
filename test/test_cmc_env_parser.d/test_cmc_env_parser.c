@@ -22,6 +22,10 @@
 #define ARRAY_NESTED_CONFIG_PATH "non_exsistent_path"
 #endif
 
+#ifndef KEA_CONFIG_PATH
+#define KEA_CONFIG_PATH "non_exsistent_path"
+#endif
+
 static struct cmc_ConfigParseInterface parser;
 static struct cmc_ConfigField *field_str = NULL;
 static struct cmc_ConfigField *field_int = NULL;
@@ -492,7 +496,7 @@ void test_optional_field_from_dict_env(void) {
 void test_optional_dict_fields_dict_name_and_dict_age(void) {
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
-                                       (char *[]){(char *)ARRAY_CONFIG_PATH},
+                                       (char *[]){(char *)DICT_CONFIG_PATH},
                                    .paths_length = 1,
                                    .name = "dict",
                                    .log_func = NULL},
@@ -533,4 +537,304 @@ void test_optional_dict_fields_dict_name_and_dict_age(void) {
   err = cmc_field_get_int(f_age, &out_age);
   TEST_ASSERT_NULL(err);
   TEST_ASSERT_EQUAL_INT(99, out_age);
+}
+
+void test_nested_dict_person_fields(void) {
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)DICT_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "dict",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  struct cmc_ConfigField *f_outer_dict, *f_inner_dict, *f_name, *f_age,
+      *f_optional;
+
+  // nested_dict (outer)
+  err = cmc_field_create("nested_dict", cmc_ConfigFieldTypeEnum_DICT, NULL,
+                         true, &f_outer_dict);
+  TEST_ASSERT_NULL(err);
+
+  // person (inner dict)
+  err = cmc_field_create("person", cmc_ConfigFieldTypeEnum_DICT, NULL, true,
+                         &f_inner_dict);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_outer_dict, f_inner_dict);
+  TEST_ASSERT_NULL(err);
+
+  // person.name (optional)
+  err = cmc_field_create("name", cmc_ConfigFieldTypeEnum_STRING, "<none>", true,
+                         &f_name);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_inner_dict, f_name);
+  TEST_ASSERT_NULL(err);
+
+  // person.age (optional)
+  err =
+      cmc_field_create("age", cmc_ConfigFieldTypeEnum_INT, NULL, true, &f_age);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_next_field(f_name, f_age);
+  TEST_ASSERT_NULL(err);
+
+  // person.optional (optional, not present)
+  err = cmc_field_create("optional", cmc_ConfigFieldTypeEnum_STRING, "n/a",
+                         true, &f_optional);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_next_field(f_age, f_optional);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_config_add_field(f_outer_dict, config);
+  TEST_ASSERT_NULL(err);
+
+  err = parser.parse(strlen(DICT_CONFIG_PATH), DICT_CONFIG_PATH, NULL, config);
+  TEST_ASSERT_NULL(err);
+
+  // Validate values
+  char *out_name = NULL, *out_optional = NULL;
+  int out_age = -1;
+
+  err = cmc_field_get_str(f_name, &out_name);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_STRING("john", out_name);
+
+  err = cmc_field_get_int(f_age, &out_age);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_INT(99, out_age);
+
+  err = cmc_field_get_str(f_optional, &out_optional);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_STRING("n/a", out_optional);
+}
+
+void test_kea_interfaces_config_parsing(void) {
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)KEA_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "kea",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  struct cmc_ConfigField *root, *cfg, *arr, *elem;
+  if (!err)
+    err = cmc_field_create("dhcp4", cmc_ConfigFieldTypeEnum_DICT, NULL, true,
+                           &root);
+  if (!err)
+    err = cmc_config_add_field(root, config);
+  if (!err)
+    err = cmc_field_create("interfaces_config", cmc_ConfigFieldTypeEnum_DICT,
+                           NULL, true, &cfg);
+  if (!err)
+    err = cmc_field_add_nested_field(root, cfg);
+  if (!err)
+    err = cmc_field_create("interfaces", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
+                           true, &arr);
+  if (!err)
+    err = cmc_field_add_nested_field(cfg, arr);
+  if (!err)
+    err =
+        cmc_field_create("", cmc_ConfigFieldTypeEnum_STRING, NULL, true, &elem);
+  if (!err)
+    err = cmc_field_add_nested_field(arr, elem);
+  if (!err)
+    err = parser.parse(strlen(KEA_CONFIG_PATH), KEA_CONFIG_PATH, NULL, config);
+
+  TEST_ASSERT_NULL(err);
+  char *out = NULL;
+  err = cmc_field_get_str(elem, &out);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_STRING("eth0", out);
+}
+
+void test_kea_lease_database_type_parsing(void) {
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)KEA_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "kea",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  struct cmc_ConfigField *root, *lease, *type;
+  if (!err)
+    err = cmc_field_create("dhcp4", cmc_ConfigFieldTypeEnum_DICT, NULL, true,
+                           &root);
+  if (!err)
+    err = cmc_config_add_field(root, config);
+  if (!err)
+    err = cmc_field_create("lease_database", cmc_ConfigFieldTypeEnum_DICT, NULL,
+                           true, &lease);
+  if (!err)
+    err = cmc_field_add_nested_field(root, lease);
+  if (!err)
+    err = cmc_field_create("type", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
+                           &type);
+  if (!err)
+    err = cmc_field_add_nested_field(lease, type);
+  if (!err)
+    err = parser.parse(strlen(KEA_CONFIG_PATH), KEA_CONFIG_PATH, NULL, config);
+
+  TEST_ASSERT_NULL(err);
+  char *out = NULL;
+  err = cmc_field_get_str(type, &out);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_STRING("memfile", out);
+}
+
+void test_kea_lease_database_name_parsing(void) {
+  struct cmc_ConfigField *root, *lease, *name;
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)KEA_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "kea",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  if (!err)
+    err = cmc_field_create("dhcp4", cmc_ConfigFieldTypeEnum_DICT, NULL, true,
+                           &root);
+  if (!err)
+    err = cmc_config_add_field(root, config);
+  if (!err)
+    err = cmc_field_create("lease_database", cmc_ConfigFieldTypeEnum_DICT, NULL,
+                           true, &lease);
+  if (!err)
+    err = cmc_field_add_nested_field(root, lease);
+  if (!err)
+    err = cmc_field_create("name", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
+                           &name);
+  if (!err)
+    err = cmc_field_add_nested_field(lease, name);
+  if (!err)
+    err = parser.parse(strlen(KEA_CONFIG_PATH), KEA_CONFIG_PATH, NULL, config);
+
+  TEST_ASSERT_NULL(err);
+  char *out = NULL;
+  err = cmc_field_get_str(name, &out);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_STRING("/var/lib/kea/dhcp4.leases", out);
+}
+
+void test_kea_subnet_pool_value_parsing(void) {
+  struct cmc_ConfigField *root, *subnet_arr, *subnet, *pools, *pool_dict,
+      *pool_val;
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)KEA_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "kea",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  if (!err)
+    err = cmc_field_create("dhcp4", cmc_ConfigFieldTypeEnum_DICT, NULL, true,
+                           &root);
+  if (!err)
+    err = cmc_config_add_field(root, config);
+  if (!err)
+    err = cmc_field_create("subnet4", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true,
+                           &subnet_arr);
+  if (!err)
+    err = cmc_field_add_nested_field(root, subnet_arr);
+  if (!err)
+    err =
+        cmc_field_create("", cmc_ConfigFieldTypeEnum_DICT, NULL, true, &subnet);
+  if (!err)
+    err = cmc_field_add_nested_field(subnet_arr, subnet);
+  if (!err)
+    err = cmc_field_create("pools", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true,
+                           &pools);
+  if (!err)
+    err = cmc_field_add_nested_field(subnet, pools);
+  if (!err)
+    err = cmc_field_create("", cmc_ConfigFieldTypeEnum_DICT, NULL, true,
+                           &pool_dict);
+  if (!err)
+    err = cmc_field_add_nested_field(pools, pool_dict);
+  if (!err)
+    err = cmc_field_create("pool", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
+                           &pool_val);
+  if (!err)
+    err = cmc_field_add_nested_field(pool_dict, pool_val);
+  if (!err)
+    err = parser.parse(strlen(KEA_CONFIG_PATH), KEA_CONFIG_PATH, NULL, config);
+
+  TEST_ASSERT_NULL(err);
+  char *out = NULL;
+  err = cmc_field_get_str(pool_val, &out);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_STRING("192.168.1.100 - 192.168.1.200", out);
+}
+
+void test_kea_option_data_second_value_parsing(void) {
+  struct cmc_ConfigField *dhcp4, *subnet4, *subnet4_dict, *opt_data, *opt_dict,
+      *data;
+
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)KEA_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "kea",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  // Define top dict and array
+  err = cmc_field_create("dhcp4", cmc_ConfigFieldTypeEnum_DICT, NULL, true,
+                         &dhcp4);
+  TEST_ASSERT_NULL(err);
+  err = cmc_config_add_field(dhcp4, config);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_create("subnet4", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true,
+                         &subnet4);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(dhcp4, subnet4);
+
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_DICT, NULL, true,
+                         &subnet4_dict);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(subnet4, subnet4_dict);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_create("option_data", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
+                         true, &opt_data);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(subnet4_dict, opt_data);
+  TEST_ASSERT_NULL(err);
+
+  err =
+      cmc_field_create("", cmc_ConfigFieldTypeEnum_DICT, NULL, true, &opt_dict);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(opt_data, opt_dict);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_create("data", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
+                         &data);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(opt_dict, data);
+  TEST_ASSERT_NULL(err);
+
+  // Parse
+  err = parser.parse(strlen(KEA_CONFIG_PATH), KEA_CONFIG_PATH, NULL, config);
+  TEST_ASSERT_NULL(err);
+
+  struct cmc_ConfigField *opt1 = opt_dict->next_field;
+  TEST_ASSERT_NOT_NULL(opt1);
+
+  struct cmc_ConfigField *opt1_data = (struct cmc_ConfigField *)opt1->value;
+  TEST_ASSERT_NOT_NULL(opt1_data);
+  TEST_ASSERT_NOT_NULL(opt1_data->value);
+
+  char *out = NULL;
+  err = cmc_field_get_str(opt1_data, &out);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_STRING("8.8.8.8", out);
 }

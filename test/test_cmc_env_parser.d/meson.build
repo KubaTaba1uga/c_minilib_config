@@ -12,7 +12,8 @@ test_cmc_env_parser_exe = executable(
   c_args: ['-DCONFIG_PATH="' + meson.current_source_dir() + '/config"',
            '-DARRAY_CONFIG_PATH="' + meson.current_source_dir() + '/array"',
            '-DARRAY_NESTED_CONFIG_PATH="' + meson.current_source_dir() + '/array_nested"',
-           '-DDICT_CONFIG_PATH="' + meson.current_source_dir() + '/dict"',	   
+           '-DDICT_CONFIG_PATH="' + meson.current_source_dir() + '/dict"',
+           '-DKEA_CONFIG_PATH="' + meson.current_source_dir() + '/kea"',	   
 	   ],  
 )
 test('test_cmc_env_parser', test_cmc_env_parser_exe)

@@ -214,8 +214,9 @@ static cmc_error_t _cmc_env_parser_parse_dict_field(
     FILE *config_file, struct cmc_ConfigField *field, bool *found_value) {
   cmc_error_t err;
 
-  struct cmc_ConfigField *key_value_pair = field->value;
-  while (key_value_pair) {
+  struct cmc_ConfigField *key_value_pairs = field->value;
+  CMC_FIELD_ITER(key_value_pair, key_value_pairs) {
+
     char *new_name_ptr, *old_name_ptr = key_value_pair->name;
 
     new_name_ptr =
@@ -235,16 +236,9 @@ static cmc_error_t _cmc_env_parser_parse_dict_field(
       goto error_out;
     }
 
-    if (!local_found_value) {
-      if (key_value_pair != field->value) {
-        *found_value = true;
-      } else {
-        *found_value = false;
-      }
-      break;
+    if (local_found_value) {
+      *found_value = true;
     }
-
-    key_value_pair = key_value_pair->next_field;
   }
 
   return NULL;
@@ -413,7 +407,8 @@ static cmc_error_t _cmc_field_deep_clone(struct cmc_ConfigField *src,
     return err;
 
   // Deep clone nested fields
-  if (src->value && src->type == cmc_ConfigFieldTypeEnum_ARRAY) {
+  if (src->value && (src->type == cmc_ConfigFieldTypeEnum_ARRAY ||
+                     src->type == cmc_ConfigFieldTypeEnum_DICT)) {
     struct cmc_ConfigField *cloned_value = NULL;
     err = _cmc_field_deep_clone(src->value, &cloned_value);
     if (err) {
