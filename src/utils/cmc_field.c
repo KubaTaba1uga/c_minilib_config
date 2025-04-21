@@ -53,6 +53,7 @@ cmc_error_t cmc_field_create(const char *name,
     case cmc_ConfigFieldTypeEnum_STRING:
       err = cmc_field_add_value_str(local_field, (char *)default_value);
       break;
+    case cmc_ConfigFieldTypeEnum_DICT:
     case cmc_ConfigFieldTypeEnum_ARRAY:
       local_field->value = NULL;
       break;
@@ -88,6 +89,7 @@ cmc_error_t cmc_field_add_nested_field(struct cmc_ConfigField *field,
   }
 
   switch (field->type) {
+  case cmc_ConfigFieldTypeEnum_DICT:
   case cmc_ConfigFieldTypeEnum_ARRAY:
     child_field->optional = field->optional;
     break;

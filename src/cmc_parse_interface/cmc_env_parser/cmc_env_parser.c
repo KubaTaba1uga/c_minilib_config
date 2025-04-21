@@ -188,19 +188,9 @@ static cmc_error_t _cmc_env_parser_parse_array_field(
     }
 
     struct cmc_ConfigField *next_subfield;
-
-    err = cmc_field_create(field->name, subfield->type, NULL, false,
-                           &next_subfield);
+    err = _cmc_field_deep_clone(subfield, &next_subfield);
     if (err) {
       goto error_out;
-    }
-
-    if (subfield->value && subfield->type == cmc_ConfigFieldTypeEnum_ARRAY) {
-      err = _cmc_field_deep_clone(
-          subfield->value, (struct cmc_ConfigField **)&next_subfield->value);
-      if (err) {
-        goto error_out;
-      }
     }
 
     prev_subfield = subfield;

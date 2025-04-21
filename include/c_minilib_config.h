@@ -49,6 +49,7 @@ enum cmc_ConfigFieldTypeEnum {
   cmc_ConfigFieldTypeEnum_STRING,
   cmc_ConfigFieldTypeEnum_INT,
   cmc_ConfigFieldTypeEnum_ARRAY,
+  cmc_ConfigFieldTypeEnum_DICT,
   cmc_ConfigFieldTypeEnum_MAX,
 };
 
