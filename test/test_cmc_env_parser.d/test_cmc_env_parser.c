@@ -847,7 +847,7 @@ void test_kea_option_data_second_value_parsing(void) {
   TEST_ASSERT_EQUAL_STRING("8.8.8.8", out);
 }
 
-void __test_parse_full_kea_env_file(void) {
+void test_parse_full_kea_env_file(void) {
   err = cmc_env_parser_init(&parser);
   TEST_ASSERT_NULL(err);
 
@@ -923,17 +923,8 @@ void __test_parse_full_kea_env_file(void) {
   cmc_field_create("data", cmc_ConfigFieldTypeEnum_STRING, NULL, true, &opt0_data);
   cmc_field_add_next_field(opt0_name, opt0_data);
 
-  cmc_field_create("", cmc_ConfigFieldTypeEnum_DICT, NULL, true, &opt1);
-  cmc_field_add_next_field(opt0, opt1);
-
-  cmc_field_create("name", cmc_ConfigFieldTypeEnum_STRING, NULL, true, &opt1_name);
-  cmc_field_add_nested_field(opt1, opt1_name);
-
-  cmc_field_create("data", cmc_ConfigFieldTypeEnum_STRING, NULL, true, &opt1_data);
-  cmc_field_add_next_field(opt1_name, opt1_data);
-
   cmc_field_create("valid_lifetime", cmc_ConfigFieldTypeEnum_INT, NULL, true, &lifetime);
-  cmc_field_add_next_field(opts, lifetime);
+  cmc_field_add_next_field(subnets, lifetime);
 
   // Parse using the ENV parser directly
   err = parser.parse(strlen(KEA_CONFIG_PATH), KEA_CONFIG_PATH, NULL, config);
@@ -965,6 +956,13 @@ void __test_parse_full_kea_env_file(void) {
   cmc_field_get_str(opt0_data, &s);
   TEST_ASSERT_EQUAL_STRING("192.168.1.1", s);
 
+  opt1 = opt0->next_field;
+  TEST_ASSERT_NOT_NULL(opt1);
+  opt1_name = opt1->value;
+  TEST_ASSERT_NOT_NULL(opt1_name);  
+  opt1_data = opt1_name->next_field;
+  TEST_ASSERT_NOT_NULL(opt1_data);  
+  
   cmc_field_get_str(opt1_name, &s);
   TEST_ASSERT_EQUAL_STRING("domain-name-servers", s);
   cmc_field_get_str(opt1_data, &s);
