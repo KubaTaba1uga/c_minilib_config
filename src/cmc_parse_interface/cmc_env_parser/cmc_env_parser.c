@@ -152,30 +152,22 @@ static cmc_error_t _cmc_env_parser_parse_array_field(
   struct cmc_ConfigField *prev_subfield = NULL;
   int32_t i = 0;
   while (subfield) {
-
-    struct cmc_ConfigField *next_subfield = NULL;
-
     char *new_name_ptr;
 
     new_name_ptr = _cmc_env_parser_create_array_name(field->name, i++);
     if (!new_name_ptr) {
       return cmc_errorf(ENOMEM, "Failed to strdup subfield name");
     }
-    puts(new_name_ptr);
 
     free(subfield->name);
     subfield->name = new_name_ptr;
 
     bool local_found_value = false;
-
     err =
         _cmc_env_parser_parse_field(config_file, subfield, &local_found_value);
     if (err) {
       goto error_out;
     }
-
-    printf(" _cmc_env_parser_parse_array_field, found_value=%d\n",
-           local_found_value);
 
     // If value not found we stop looking further
     if (!local_found_value) {
@@ -191,8 +183,11 @@ static cmc_error_t _cmc_env_parser_parse_array_field(
         // because array is not empty we set up found_value to true
         *found_value = true;
       }
+
       break;
     }
+
+    struct cmc_ConfigField *next_subfield;
 
     err = cmc_field_create(field->name, subfield->type, NULL, false,
                            &next_subfield);
