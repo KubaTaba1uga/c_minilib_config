@@ -90,6 +90,8 @@ void cmc_config_destroy(struct cmc_Config **config) {
     cmc_field_destroy(&subfield);
   }
 
+  cmc_tree_node_destroy(&(*config)->_fields);
+
   free(*config);
 
   *config = NULL;

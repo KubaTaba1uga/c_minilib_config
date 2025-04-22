@@ -23,12 +23,4 @@ cmc_field_of_node(struct cmc_TreeNode *node_ptr) {
   return cmc_container_of(node_ptr, struct cmc_ConfigField, _self);
 };
 
-#define CMC_SUBFIELDS_ITER(var, field)                                         \
-  struct cmc_TreeNode *__##var;                                                \
-  struct cmc_ConfigField *var;                                                 \
-  for (uint32_t _i = 0;                                                        \
-       _i < (field)->_self.subfields_len && (__##var) =                        \
-           (field)->self.subnodes[_i] && (var) = cmc_field_of_node(__##var);   \
-       _i++;)
-
 #endif // C_MINILIB_CONFIG_CMC_FIELD_H

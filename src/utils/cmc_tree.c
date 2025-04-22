@@ -23,6 +23,10 @@ error_out:
 }
 
 void cmc_tree_node_destroy(struct cmc_TreeNode *node) {
+  if (!node) {
+    return;
+  }
+
   free(node->subnodes);
   node->subnodes = NULL;
   node->subnodes_len = 0;
