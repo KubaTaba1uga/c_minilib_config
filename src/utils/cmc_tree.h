@@ -1,6 +1,7 @@
 #ifndef C_MINILIB_CONFIG_CMC_TREE_H
 #define C_MINILIB_CONFIG_CMC_TREE_H
 
+#include <stddef.h> /* for offsetof() */
 #include <stdint.h>
 
 #define cmc_container_of(ptr, type, member)                                    \

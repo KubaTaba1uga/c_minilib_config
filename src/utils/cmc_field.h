@@ -21,7 +21,9 @@ void cmc_field_destroy(struct cmc_ConfigField **field);
   for (struct cmc_ConfigField *var = (field); (var) != NULL;                   \
        (var) = (var)->next_field)
 
-static inline struct cmc_ConfigField *cmc_field_of_node(struct cmc_tree_node *node_ptr){
-  return cmc_container_of(node_ptr, struct cmc_ConfigField, self);
-};
+/* static inline struct cmc_ConfigField *cmc_field_of_node(struct cmc_tree_node
+ * *node_ptr){ */
+/*   return cmc_container_of(node_ptr, struct cmc_ConfigField, self); */
+/* }; */
+
 #endif // C_MINILIB_CONFIG_CMC_FIELD_H

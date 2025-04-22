@@ -103,8 +103,8 @@ static cmc_error_t _cmc_env_parser_parse_field(FILE *config_file,
                                                struct cmc_ConfigField *field,
                                                bool *found_value) {
   cmc_error_t err;
-  printf("Parsing name=%s, type=%d, found=%d, ptr=%p\n", field->name, field->type,
-         *found_value, field);
+  printf("Parsing name=%s, type=%d, found=%d, ptr=%p\n", field->name,
+         field->type, *found_value, field);
 
   if (field->type == cmc_ConfigFieldTypeEnum_ARRAY) {
     err = _cmc_env_parser_parse_array_field(config_file, field, found_value);
@@ -127,8 +127,8 @@ static cmc_error_t _cmc_env_parser_parse_field(FILE *config_file,
     }
   }
 
-  printf("Parsed name=%s, type=%d, found=%d, ptr=%p\n", field->name, field->type,
-         *found_value, field);
+  printf("Parsed name=%s, type=%d, found=%d, ptr=%p\n", field->name,
+         field->type, *found_value, field);
 
   return NULL;
 
@@ -413,7 +413,6 @@ static cmc_error_t _cmc_field_deep_clone(struct cmc_ConfigField *src,
   while (current_field && current_field->next_field) {
     struct cmc_ConfigField *next_field = current_field->next_field;
 
-
     struct cmc_ConfigField *next_field_cp = NULL;
     err = cmc_field_create(next_field->name, next_field->type, NULL,
                            next_field->optional, &next_field_cp);
@@ -421,10 +420,9 @@ static cmc_error_t _cmc_field_deep_clone(struct cmc_ConfigField *src,
       return err;
     }
 
-    printf("\n`next_field->name=%s, `current->name=%s`, ptr=%p\n", next_field->name,
-           current_field->name, next_field_cp);
+    printf("\n`next_field->name=%s, `current->name=%s`, ptr=%p\n",
+           next_field->name, current_field->name, next_field_cp);
 
-    
     current_field_cp->next_field = next_field_cp;
     current_field_cp = next_field_cp;
     current_field = next_field;

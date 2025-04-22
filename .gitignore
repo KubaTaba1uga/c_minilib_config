@@ -8,3 +8,4 @@
 bkp/*
 .cache/*
 build/*
+compile_commands.json

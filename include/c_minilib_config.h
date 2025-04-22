@@ -7,7 +7,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-
 //
 ////
 //////
@@ -56,10 +55,11 @@ enum cmc_ConfigFieldTypeEnum {
 
 struct cmc_tree_node;
 struct cmc_ConfigField {
-  struct cmc_tree_node self;
+  /* struct cmc_tree_node self; */
   char *name;
   void *value;
   bool optional;
+  struct cmc_ConfigField *next_field;
   enum cmc_ConfigFieldTypeEnum type;
 };
 
@@ -95,7 +95,7 @@ struct cmc_ConfigSettings {
 };
 
 struct cmc_Config {
-  struct cmc_tree_node* fields;                       
+  struct cmc_ConfigField *fields;
   struct cmc_ConfigSettings *settings;
 };
 
