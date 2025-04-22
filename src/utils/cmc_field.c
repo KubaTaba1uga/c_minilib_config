@@ -158,6 +158,7 @@ void cmc_field_destroy(struct cmc_ConfigField **field) {
     cmc_field_destroy(&subfield);
   }
 
+  cmc_tree_node_destroy(&(*field)->_self);
   cmc_field_value_destroy(field);
   free((*field)->name);
   free((*field));

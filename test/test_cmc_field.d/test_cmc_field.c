@@ -98,3 +98,87 @@ void test_field_add_int_value_optional(void) {
   TEST_ASSERT_NULL(err);
   TEST_ASSERT_EQUAL_INT(333, *(int32_t *)field->value);
 }
+
+void test_field_add_valid_subfield(void) {
+  struct cmc_ConfigField *parent = NULL, *child = NULL;
+  err = cmc_field_create("arr", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true,
+                         &parent);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_create("elem", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
+                         &child);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_add_subfield(parent, child);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_UINT32(1, parent->_self.subnodes_len);
+  TEST_ASSERT_EQUAL_PTR(child, cmc_field_of_node(parent->_self.subnodes[0]));
+
+  cmc_field_destroy(&parent);
+}
+
+void test_field_add_subfield_to_invalid_type_should_fail(void) {
+  struct cmc_ConfigField *non_container = NULL, *child = NULL;
+  err = cmc_field_create("not_a_container", cmc_ConfigFieldTypeEnum_STRING,
+                         NULL, true, &non_container);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_create("child", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
+                         &child);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_add_subfield(non_container, child);
+  TEST_ASSERT_NOT_NULL(err);
+
+  cmc_field_destroy(&non_container);
+  cmc_field_destroy(&child);
+}
+
+void test_field_destroy_with_subfields(void) {
+  struct cmc_ConfigField *parent = NULL, *child = NULL;
+  // Create a DICT field and a child STRING field
+  err = cmc_field_create("dict", cmc_ConfigFieldTypeEnum_DICT, NULL, true,
+                         &parent);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_create("key", cmc_ConfigFieldTypeEnum_STRING, "abc", true,
+                         &child);
+  TEST_ASSERT_NULL(err);
+
+  // Add child to parent's tree
+  err = cmc_field_add_subfield(parent, child);
+  TEST_ASSERT_NULL(err);
+
+  // Destroy recursively
+  cmc_field_destroy(&parent);
+
+  // Assert top pointer cleared
+  TEST_ASSERT_NULL(parent);
+}
+
+void test_field_destroy_with_nested_subfields(void) {
+  struct cmc_ConfigField *parent = NULL, *array = NULL, *str = NULL;
+  ;
+  // Create a DICT field and a child STRING field
+  err = cmc_field_create("array", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true,
+                         &parent);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_create("nested_array", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
+                         true, &array);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_add_subfield(parent, array);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_create("str", cmc_ConfigFieldTypeEnum_STRING, "abc", true,
+                         &str);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_add_subfield(array, str);
+  TEST_ASSERT_NULL(err);
+
+  // Destroy recursively
+  cmc_field_destroy(&parent);
+
+  // Assert top pointer cleared
+  TEST_ASSERT_NULL(parent);
+}
