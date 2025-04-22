@@ -14,18 +14,6 @@
 #define CONFIG_PATH "non_exsistent_path"
 #endif
 
-#ifndef ARRAY_CONFIG_PATH
-#define ARRAY_CONFIG_PATH "non_exsistent_path"
-#endif
-
-#ifndef ARRAY_NESTED_CONFIG_PATH
-#define ARRAY_NESTED_CONFIG_PATH "non_exsistent_path"
-#endif
-
-#ifndef KEA_CONFIG_PATH
-#define KEA_CONFIG_PATH "non_exsistent_path"
-#endif
-
 static struct cmc_ConfigParseInterface parser;
 static struct cmc_Config *config = NULL;
 static cmc_error_t err = NULL;
@@ -41,14 +29,14 @@ void tearDown(void) {
   cmc_error_destroy(&err);
 }
 
-void __test_is_format_for_existing_config_env(void) {
+void test_is_format_for_existing_config_env(void) {
   bool result = false;
   err = parser.is_format(strlen(CONFIG_PATH), CONFIG_PATH, &result);
   TEST_ASSERT_NULL(err);
   TEST_ASSERT_TRUE(result);
 }
 
-void __test_is_format_for_nonexistent_file(void) {
+void test_is_format_for_nonexistent_file(void) {
   const char *base = "does_not_exist";
   bool result = true;
   err = parser.is_format(strlen(base), base, &result);
@@ -56,7 +44,11 @@ void __test_is_format_for_nonexistent_file(void) {
   TEST_ASSERT_FALSE(result);
 }
 
-void __test_parse_valid_env_file(void) {
+void test_parse_valid_env_file(void) {
+  struct cmc_ConfigField *field_str = NULL;
+  struct cmc_ConfigField *field_int = NULL;
+  struct cmc_ConfigField *field_empty = NULL;
+
   // Create config with one supported path and name
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =

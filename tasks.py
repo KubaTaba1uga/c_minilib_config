@@ -73,14 +73,22 @@ def build(c, debug=False):
     _pr_info("Build done")
 
 
-@task
-def test(c):
+from invoke import task
+
+
+@task(iterable=["name"])
+def test(c, name=None):
     _pr_info("Testing...")
 
-    _run_command(
-        c,
-        f"ASAN_OPTIONS=detect_leaks=1:halt_on_error=0 meson test -C {BUILD_PATH} --verbose",
-    )
+    # Base test command
+    cmd = f"meson test -C {BUILD_PATH} --verbose"
+
+    # Add test name(s) if provided
+    if name:
+        name_args = " ".join([f"--suite {n}" for n in name])
+        cmd += f" {name_args}"
+
+    _run_command(c, cmd)
 
     _pr_info("Testing done")
 
