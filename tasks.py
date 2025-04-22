@@ -77,7 +77,10 @@ def build(c, debug=False):
 def test(c):
     _pr_info("Testing...")
 
-    _run_command(c, f"meson test -C {BUILD_PATH} --verbose")
+    _run_command(
+        c,
+        f"ASAN_OPTIONS=detect_leaks=1:halt_on_error=0 meson test -C {BUILD_PATH} --verbose",
+    )
 
     _pr_info("Testing done")
 

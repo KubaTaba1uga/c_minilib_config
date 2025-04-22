@@ -155,7 +155,7 @@ cmc_error_t cmc_field_get_int(const struct cmc_ConfigField *field,
   return NULL;
 };
 
-void cmc_field_destroy(struct cmc_ConfigField **field) {
+void cmc_field_value_destroy(struct cmc_ConfigField **field) {
   if (!field || !*field) {
     return;
   }
@@ -165,23 +165,35 @@ void cmc_field_destroy(struct cmc_ConfigField **field) {
   if (ptr->value && (ptr->type == cmc_ConfigFieldTypeEnum_ARRAY ||
                      ptr->type == cmc_ConfigFieldTypeEnum_DICT)) {
     struct cmc_ConfigField *nested_field = ptr->value;
-    while (nested_field) {
-      struct cmc_ConfigField *next = nested_field->next_field;
-      cmc_field_destroy(&nested_field);
-      nested_field = next;
-    }
-
-    
-    
-    
+    cmc_field_destroy(&nested_field);
   } else {
     free(ptr->value); // Only free scalar value
   }
 
+  ptr->value = NULL;
+}
 
+void cmc_field_next_destroy(struct cmc_ConfigField **field) {
+  if (!field || !*field) {
+    return;
+  }
 
+  struct cmc_ConfigField *current = *field;
+
+  cmc_field_destroy(&current->next_field);
+
+  (*field)->next_field = NULL;
+}
+
+void cmc_field_destroy(struct cmc_ConfigField **field) {
+  if (!field || !*field) {
+    return;
+  }
+
+  cmc_field_value_destroy(field);
+  cmc_field_next_destroy(field);
   free((*field)->name);
-  free(*field);
+  free((*field));
   *field = NULL;
 }
 

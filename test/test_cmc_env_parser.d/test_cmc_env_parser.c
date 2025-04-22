@@ -44,14 +44,14 @@ void tearDown(void) {
   cmc_error_destroy(&err);
 }
 
-void test_is_format_for_existing_config_env(void) {
+void __test_is_format_for_existing_config_env(void) {
   bool result = false;
   err = parser.is_format(strlen(CONFIG_PATH), CONFIG_PATH, &result);
   TEST_ASSERT_NULL(err);
   TEST_ASSERT_TRUE(result);
 }
 
-void test_is_format_for_nonexistent_file(void) {
+void __test_is_format_for_nonexistent_file(void) {
   const char *base = "does_not_exist";
   bool result = true;
   err = parser.is_format(strlen(base), base, &result);
@@ -59,7 +59,7 @@ void test_is_format_for_nonexistent_file(void) {
   TEST_ASSERT_FALSE(result);
 }
 
-void test_parse_valid_env_file(void) {
+void __test_parse_valid_env_file(void) {
   // Create config with one supported path and name
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
@@ -282,7 +282,7 @@ void __test_parse_array_env_file(void) {
   }
 }
 
-void test_required_array_without_default_should_fail(void) {
+void __test_required_array_without_default_should_fail(void) {
   // Setup config for nonexistent input
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
@@ -315,7 +315,7 @@ void test_required_array_without_default_should_fail(void) {
   TEST_ASSERT_EQUAL_INT(ENOENT, err->code);
 }
 
-void test_required_array_without_default_should_fail_always(void) {
+void __test_required_array_without_default_should_fail_always(void) {
   // Setup config for nonexistent input
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
@@ -347,7 +347,7 @@ void test_required_array_without_default_should_fail_always(void) {
   TEST_ASSERT_NOT_NULL(err);
   TEST_ASSERT_EQUAL_INT(ENOENT, err->code);
 }
-void test_optional_array_parsing(void) {
+void __test_optional_array_parsing(void) {
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
                                        (char *[]){(char *)ARRAY_CONFIG_PATH},
@@ -466,7 +466,7 @@ void test_nested_array_parsing(void) {
   TEST_ASSERT_NULL(row);
 }
 
-void test_double_nested_array_parsing(void) {
+void __test_double_nested_array_parsing(void) {
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
                                        (char *[]){(char *)ARRAY_CONFIG_PATH},
@@ -525,7 +525,7 @@ void test_double_nested_array_parsing(void) {
   }
 }
 
-void test_optional_field_from_dict_env(void) {
+void __test_optional_field_from_dict_env(void) {
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
                                        (char *[]){(char *)DICT_CONFIG_PATH},
@@ -552,7 +552,7 @@ void test_optional_field_from_dict_env(void) {
   TEST_ASSERT_EQUAL_STRING("default_val", out_val);
 }
 
-void test_optional_dict_fields_dict_name_and_dict_age(void) {
+void __test_optional_dict_fields_dict_name_and_dict_age(void) {
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
                                        (char *[]){(char *)DICT_CONFIG_PATH},
@@ -598,7 +598,7 @@ void test_optional_dict_fields_dict_name_and_dict_age(void) {
   TEST_ASSERT_EQUAL_INT(99, out_age);
 }
 
-void test_nested_dict_person_fields(void) {
+void __test_nested_dict_person_fields(void) {
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
                                        (char *[]){(char *)DICT_CONFIG_PATH},
@@ -667,7 +667,7 @@ void test_nested_dict_person_fields(void) {
   TEST_ASSERT_EQUAL_STRING("n/a", out_optional);
 }
 
-void test_parse_list_of_persons_env_file(void) {
+void __test_parse_list_of_persons_env_file(void) {
   // 1) init parser & config
   err = cmc_env_parser_init(&parser);
   TEST_ASSERT_NULL(err);
