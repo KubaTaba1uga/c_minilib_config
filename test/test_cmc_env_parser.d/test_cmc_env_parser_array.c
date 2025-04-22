@@ -254,3 +254,72 @@ void test_nested_array_parsing(void) {
         }
     }
 }
+
+void test_double_nested_array_parsing(void) {
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)ARRAY_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "array",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  struct cmc_ConfigField *outer, *mid, *inner;
+  err = cmc_field_create("double_nested_array", cmc_ConfigFieldTypeEnum_ARRAY,
+                         NULL, true, &outer);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true, &mid);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true, &inner);
+  TEST_ASSERT_NULL(err);
+
+  struct cmc_ConfigField *leaf;
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_INT, NULL, true, &leaf);
+  TEST_ASSERT_NULL(err);
+
+  // use cmc_field_add_subfield, not the nonexistent nested function
+  err = cmc_field_add_subfield(inner, leaf);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_subfield(mid, inner);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_subfield(outer, mid);
+  TEST_ASSERT_NULL(err);
+  err = cmc_config_add_field(outer, config);
+  TEST_ASSERT_NULL(err);
+
+  err = parser.parse(strlen(ARRAY_CONFIG_PATH), ARRAY_CONFIG_PATH, NULL, config);
+  TEST_ASSERT_NULL(err);
+
+  // we expect exactly two rows at the top level
+  TEST_ASSERT_EQUAL_UINT32(2, outer->_self.subnodes_len);
+
+  // probing values:
+  for (uint32_t i = 0; i < outer->_self.subnodes_len; ++i) {
+    struct cmc_ConfigField *lvl1 =
+        cmc_field_of_node(outer->_self.subnodes[i]);
+    for (uint32_t j = 0; j < lvl1->_self.subnodes_len; ++j) {
+      struct cmc_ConfigField *lvl2 =
+          cmc_field_of_node(lvl1->_self.subnodes[j]);
+      for (uint32_t k = 0; k < lvl2->_self.subnodes_len; ++k) {
+        struct cmc_ConfigField *lvl3 =
+            cmc_field_of_node(lvl2->_self.subnodes[k]);
+        int val = -1;
+        err = cmc_field_get_int(lvl3, &val);
+        TEST_ASSERT_NULL(err);
+
+        if (i == 0) {
+          // first outer: [ {0,1,2}, {10,11} ]
+          if (j == 0) {
+            TEST_ASSERT_EQUAL_INT((int)k, val);
+          } else {
+            TEST_ASSERT_EQUAL_INT(10 + (int)k, val);
+          }
+        } else {
+          // second outer: [ {100}, {110}, {120} ]
+          TEST_ASSERT_EQUAL_INT(100 + 10 * (int)j, val);
+        }
+      }
+    }
+  }
+}
