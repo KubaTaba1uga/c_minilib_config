@@ -418,22 +418,21 @@ static cmc_error_t _cmc_field_deep_clone(struct cmc_ConfigField *src,
     }
     copy->value = cloned_value;
 
-    goto out;
-  }
+  } else {
+    // Only atomic types here
+    CMC_FIELD_ITER(next_field, src) {
+      struct cmc_ConfigField *next_copy;
+      err = cmc_field_create(next_field->name, next_field->type, NULL,
+                             next_field->optional, &next_copy);
+      if (err) {
+        return err;
+      }
 
-  // Only atomic types here
-  CMC_FIELD_ITER(next_field, src) {
-    struct cmc_ConfigField *next_copy;
-    err = cmc_field_create(next_field->name, next_field->type, NULL,
-                           next_field->optional, &next_copy);
-    if (err) {
-      return err;
+      copy->next_field = next_copy;
     }
-
-    copy->next_field = next_copy;
   }
 
-out:
   *dst = copy;
+
   return NULL;
 }

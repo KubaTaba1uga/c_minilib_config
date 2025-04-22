@@ -111,7 +111,7 @@ void test_parse_valid_env_file(void) {
   TEST_ASSERT_EQUAL_STRING("default_value", out_empty);
 }
 
-void __test_parse_array_env_file(void) {
+void test_parse_array_env_file(void) {
   // 1) create config for directory ARRAY_CONFIG_PATH and base name "array"
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
@@ -122,46 +122,42 @@ void __test_parse_array_env_file(void) {
       &config);
   TEST_ASSERT_NULL(err);
 
-  // 2) empty_array: declare ARRAY of INT
-  struct cmc_ConfigField *f_empty_array, *f_empty_elem;
-  err = cmc_field_create("empty_array", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
-                         true, &f_empty_array);
+  // 2) OPTIONAL_ARRAY: declare ARRAY of STRING
+  struct cmc_ConfigField *f_optional_array, *f_optional_elem;
+  err = cmc_field_create("optional_array", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
+                         true, &f_optional_array);
   TEST_ASSERT_NULL(err);
-  // nested INT descriptor
-  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_INT, NULL, true,
-                         &f_empty_elem);
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
+                         &f_optional_elem);
   TEST_ASSERT_NULL(err);
-  err = cmc_field_add_nested_field(f_empty_array, f_empty_elem);
+  err = cmc_field_add_nested_field(f_optional_array, f_optional_elem);
   TEST_ASSERT_NULL(err);
-  err = cmc_config_add_field(f_empty_array, config);
-  TEST_ASSERT_NULL(err);
-
-  // 3) filled_array: same setup
-  struct cmc_ConfigField *f_filled_array, *f_filled_elem;
-  err = cmc_field_create("filled_array", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
-                         true, &f_filled_array);
-  TEST_ASSERT_NULL(err);
-  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_INT, NULL, true,
-                         &f_filled_elem);
-  TEST_ASSERT_NULL(err);
-  err = cmc_field_add_nested_field(f_filled_array, f_filled_elem);
-  TEST_ASSERT_NULL(err);
-  err = cmc_config_add_field(f_filled_array, config);
+  err = cmc_config_add_field(f_optional_array, config);
   TEST_ASSERT_NULL(err);
 
-  // 4) nested_array: ARRAY of ARRAY of INT
+  // 3) FLAT_ARRAY: declare ARRAY of STRING
+  struct cmc_ConfigField *f_flat_array, *f_flat_elem;
+  err = cmc_field_create("flat_array", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
+                         true, &f_flat_array);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
+                         &f_flat_elem);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_flat_array, f_flat_elem);
+  TEST_ASSERT_NULL(err);
+  err = cmc_config_add_field(f_flat_array, config);
+  TEST_ASSERT_NULL(err);
+
+  // 4) NESTED_ARRAY: ARRAY of ARRAY of INT
   struct cmc_ConfigField *f_nested_array, *f_nested_row, *f_nested_cell;
   err = cmc_field_create("nested_array", cmc_ConfigFieldTypeEnum_ARRAY, NULL,
                          true, &f_nested_array);
   TEST_ASSERT_NULL(err);
-
-  // first level: rows (ARRAY)
   err = cmc_field_create("", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true,
                          &f_nested_row);
   TEST_ASSERT_NULL(err);
   err = cmc_field_add_nested_field(f_nested_array, f_nested_row);
   TEST_ASSERT_NULL(err);
-  // second level: cells (INT)
   err = cmc_field_create("", cmc_ConfigFieldTypeEnum_INT, NULL, true,
                          &f_nested_cell);
   TEST_ASSERT_NULL(err);
@@ -170,60 +166,123 @@ void __test_parse_array_env_file(void) {
   err = cmc_config_add_field(f_nested_array, config);
   TEST_ASSERT_NULL(err);
 
-  // 5) parse
+  // 5) DOUBLE_NESTED_ARRAY: ARRAY of ARRAY of ARRAY of INT
+  struct cmc_ConfigField *f_double_array, *f_double_mid, *f_double_inner,
+      *f_double_leaf;
+  err = cmc_field_create("double_nested_array", cmc_ConfigFieldTypeEnum_ARRAY,
+                         NULL, true, &f_double_array);
+  TEST_ASSERT_NULL(err);
+  // mid level
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true,
+                         &f_double_mid);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_double_array, f_double_mid);
+  TEST_ASSERT_NULL(err);
+  // inner level
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true,
+                         &f_double_inner);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_double_mid, f_double_inner);
+  TEST_ASSERT_NULL(err);
+  // leaf level
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_INT, NULL, true,
+                         &f_double_leaf);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_double_inner, f_double_leaf);
+  TEST_ASSERT_NULL(err);
+  err = cmc_config_add_field(f_double_array, config);
+  TEST_ASSERT_NULL(err);
+
+  // 6) parse
   err =
       parser.parse(strlen(ARRAY_CONFIG_PATH), ARRAY_CONFIG_PATH, NULL, config);
-  /* puts(err->msg); */
   TEST_ASSERT_NULL(err);
 
-  // 6) check empty_array: first element should be optional 0, no next
-  struct cmc_ConfigField *elem = f_empty_array->value;
+  // 7) check OPTIONAL_ARRAY: element exists, but no value
+  struct cmc_ConfigField *elem = f_optional_array->value;
   TEST_ASSERT_NOT_NULL(elem);
-
-  int out;
-  err = cmc_field_get_int(elem, &out);
-  TEST_ASSERT_NULL(err);
-  TEST_ASSERT_EQUAL_INT(0, out);
+  TEST_ASSERT_NULL(elem->value);
   TEST_ASSERT_NULL(elem->next_field);
 
-  // 7) check filled_array: expect [0,1]
-  elem = f_filled_array->value;
-  err = cmc_field_get_int(elem, &out);
-  TEST_ASSERT_NULL(err);
-  TEST_ASSERT_EQUAL_INT(0, out);
-  elem = elem->next_field;
-  TEST_ASSERT_NOT_NULL(elem);
-  err = cmc_field_get_int(elem, &out);
-  TEST_ASSERT_NULL(err);
-  TEST_ASSERT_EQUAL_INT(1, out);
-  TEST_ASSERT_NULL(elem->next_field);
+  // 8) check FLAT_ARRAY: expect ["a","b","c","d"]
+  const char *expected_strs[] = {"a", "b", "c", "d"};
+  elem = f_flat_array->value;
+  for (int i = 0; i < 4; i++) {
+    TEST_ASSERT_NOT_NULL(elem);
+    char *out_s = NULL;
+    err = cmc_field_get_str(elem, &out_s);
+    TEST_ASSERT_NULL(err);
+    TEST_ASSERT_EQUAL_STRING(expected_strs[i], out_s);
+    elem = elem->next_field;
+  }
+  TEST_ASSERT_NULL(elem);
 
-  // 8) check nested_array: 2×2 matrix: [ [0,1], [10,11] ]
+  // 9) check NESTED_ARRAY: 2×2 matrix [[0,1],[10,11]]
   struct cmc_ConfigField *row = f_nested_array->value;
-  // row 0
+  int out_i;
+  // row 0
   struct cmc_ConfigField *cell = row->value;
-  err = cmc_field_get_int(cell, &out);
+  err = cmc_field_get_int(cell, &out_i);
   TEST_ASSERT_NULL(err);
-  TEST_ASSERT_EQUAL_INT(0, out);
+  TEST_ASSERT_EQUAL_INT(0, out_i);
   cell = cell->next_field;
-  err = cmc_field_get_int(cell, &out);
+  err = cmc_field_get_int(cell, &out_i);
   TEST_ASSERT_NULL(err);
-  TEST_ASSERT_EQUAL_INT(1, out);
-  // row 1
+  TEST_ASSERT_EQUAL_INT(1, out_i);
+  // row 1
   row = row->next_field;
   TEST_ASSERT_NOT_NULL(row);
   cell = row->value;
-  TEST_ASSERT_NOT_NULL(cell);
-  err = cmc_field_get_int(cell, &out);
+  err = cmc_field_get_int(cell, &out_i);
   TEST_ASSERT_NULL(err);
-  TEST_ASSERT_EQUAL_INT(10, out);
+  TEST_ASSERT_EQUAL_INT(10, out_i);
   cell = cell->next_field;
-  err = cmc_field_get_int(cell, &out);
+  err = cmc_field_get_int(cell, &out_i);
   TEST_ASSERT_NULL(err);
-  TEST_ASSERT_EQUAL_INT(11, out);
+  TEST_ASSERT_EQUAL_INT(11, out_i);
+
+  // 10) check DOUBLE_NESTED_ARRAY:
+  // [ [ [0,1,2], [10,11] ], [ [100], [110], [120] ] ]
+  struct cmc_ConfigField *outer = f_double_array->value;
+  int expected0[][3] = {{0, 1, 2}, {10, 11, -1}}; // -1 filler ignored
+  int expected1[][1] = {{100}, {110}, {120}};
+  // outer[0]
+  struct cmc_ConfigField *mid = outer->value;
+  // mid[0] → leafs: 0,1,2
+  struct cmc_ConfigField *leaf = mid->value;
+  for (int k = 0; k < 3; k++) {
+    TEST_ASSERT_NOT_NULL(leaf);
+    err = cmc_field_get_int(leaf, &out_i);
+    TEST_ASSERT_NULL(err);
+    TEST_ASSERT_EQUAL_INT(expected0[0][k], out_i);
+    leaf = leaf->next_field;
+  }
+  // mid[1] → leafs: 10,11
+  mid = mid->next_field;
+  TEST_ASSERT_NOT_NULL(mid);
+  leaf = mid->value;
+  for (int k = 0; k < 2; k++) {
+    TEST_ASSERT_NOT_NULL(leaf);
+    err = cmc_field_get_int(leaf, &out_i);
+    TEST_ASSERT_NULL(err);
+    TEST_ASSERT_EQUAL_INT(expected0[1][k], out_i);
+    leaf = leaf->next_field;
+  }
+  // outer[1]
+  outer = outer->next_field;
+  TEST_ASSERT_NOT_NULL(outer);
+  mid = outer->value;
+  for (int j = 0; j < 3; j++) {
+    TEST_ASSERT_NOT_NULL(mid);
+    leaf = mid->value;
+    err = cmc_field_get_int(leaf, &out_i);
+    TEST_ASSERT_NULL(err);
+    TEST_ASSERT_EQUAL_INT(expected1[j][0], out_i);
+    mid = mid->next_field;
+  }
 }
 
-void __test_required_array_without_default_should_fail(void) {
+void test_required_array_without_default_should_fail(void) {
   // Setup config for nonexistent input
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
@@ -256,7 +315,7 @@ void __test_required_array_without_default_should_fail(void) {
   TEST_ASSERT_EQUAL_INT(ENOENT, err->code);
 }
 
-void __test_required_array_without_default_should_fail_always(void) {
+void test_required_array_without_default_should_fail_always(void) {
   // Setup config for nonexistent input
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
@@ -608,6 +667,94 @@ void test_nested_dict_person_fields(void) {
   TEST_ASSERT_EQUAL_STRING("n/a", out_optional);
 }
 
+void test_parse_list_of_persons_env_file(void) {
+  // 1) init parser & config
+  err = cmc_env_parser_init(&parser);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){.supported_paths =
+                                       (char *[]){(char *)DICT_CONFIG_PATH},
+                                   .paths_length = 1,
+                                   .name = "list",
+                                   .log_func = NULL},
+      &config);
+  TEST_ASSERT_NULL(err);
+
+  // 2) declare `list` as ARRAY → nested `person` DICT → fields `name`, `age`
+  struct cmc_ConfigField *f_list, *f_dict, *f_person, *f_name, *f_age;
+
+  err = cmc_field_create("list", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true,
+                         &f_list);
+  TEST_ASSERT_NULL(err);
+  err = cmc_config_add_field(f_list, config);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_create("", cmc_ConfigFieldTypeEnum_DICT, NULL, true, &f_dict);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_list, f_dict);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_create("person", cmc_ConfigFieldTypeEnum_DICT, NULL, true,
+                         &f_person);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_dict, f_person);
+  TEST_ASSERT_NULL(err);
+
+  err = cmc_field_create("name", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
+                         &f_name);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(f_person, f_name);
+  TEST_ASSERT_NULL(err);
+
+  err =
+      cmc_field_create("age", cmc_ConfigFieldTypeEnum_INT, NULL, true, &f_age);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_next_field(f_name, f_age);
+  TEST_ASSERT_NULL(err);
+
+  // 3) parse via the ENV‐parser
+  err = parser.parse(strlen(DICT_CONFIG_PATH), DICT_CONFIG_PATH, NULL, config);
+  TEST_ASSERT_NULL(err);
+
+  // 4) check first element
+  char *out_s = NULL;
+  int out_i = -1;
+
+  err = cmc_field_get_str(f_name, &out_s);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_STRING("john", out_s);
+
+  err = cmc_field_get_int(f_age, &out_i);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_INT(99, out_i);
+
+  // 5) advance to second array element
+  //    deep‑clone should have produced f_list->value->next_field
+
+  TEST_ASSERT_NOT_NULL(f_dict->next_field);
+  if (!f_dict->next_field) {
+    return;
+  }
+  struct cmc_ConfigField *second_dict = f_dict->next_field;
+  TEST_ASSERT_NOT_NULL(second_dict);
+  struct cmc_ConfigField *second_person = second_dict->value;
+  TEST_ASSERT_NOT_NULL(second_person);
+
+  //    under that, the `name` and `age` clones live exactly
+  //    as `second_person->value` and its ->next_field
+  struct cmc_ConfigField *second_name = second_person->value;
+  struct cmc_ConfigField *second_age = second_name->next_field;
+
+  err = cmc_field_get_str(second_name, &out_s);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_STRING("alan", out_s);
+
+  err = cmc_field_get_int(second_age, &out_i);
+  TEST_ASSERT_NULL(err);
+  TEST_ASSERT_EQUAL_INT(47, out_i);
+}
+
 void test_kea_interfaces_config_parsing(void) {
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
@@ -775,7 +922,7 @@ void test_kea_subnet_pool_value_parsing(void) {
 
 void test_kea_option_data_second_value_parsing(void) {
   struct cmc_ConfigField *dhcp4, *subnet4, *subnet4_dict, *opt_data, *opt_dict,
-    *data, *name;
+      *data, *name;
 
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
@@ -816,12 +963,12 @@ void test_kea_option_data_second_value_parsing(void) {
   err = cmc_field_add_nested_field(opt_data, opt_dict);
   TEST_ASSERT_NULL(err);
 
+  err = cmc_field_create("name", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
+                         &name);
+  TEST_ASSERT_NULL(err);
+  err = cmc_field_add_nested_field(opt_dict, name);
+  TEST_ASSERT_NULL(err);
 
-  err=   cmc_field_create("name", cmc_ConfigFieldTypeEnum_STRING, NULL, true, &name);
-  TEST_ASSERT_NULL(err);
-  err= cmc_field_add_nested_field(opt_dict, name);
-  TEST_ASSERT_NULL(err);
-  
   err = cmc_field_create("data", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
                          &data);
   TEST_ASSERT_NULL(err);
@@ -836,7 +983,7 @@ void test_kea_option_data_second_value_parsing(void) {
   TEST_ASSERT_NOT_NULL(opt1);
 
   struct cmc_ConfigField *opt1_name = (struct cmc_ConfigField *)opt1->value;
-  TEST_ASSERT_NOT_NULL(opt1_name);  
+  TEST_ASSERT_NOT_NULL(opt1_name);
   struct cmc_ConfigField *opt1_data = opt1_name->next_field;
   TEST_ASSERT_NOT_NULL(opt1_data);
   TEST_ASSERT_NOT_NULL(opt1_data->value);
@@ -872,34 +1019,40 @@ void test_parse_full_kea_env_file(void) {
   cmc_field_create("dhcp4", cmc_ConfigFieldTypeEnum_DICT, NULL, true, &dhcp4);
   cmc_config_add_field(dhcp4, config);
 
-  cmc_field_create("interfaces_config", cmc_ConfigFieldTypeEnum_DICT, NULL, true, &ifcfg);
+  cmc_field_create("interfaces_config", cmc_ConfigFieldTypeEnum_DICT, NULL,
+                   true, &ifcfg);
   cmc_field_add_nested_field(dhcp4, ifcfg);
 
-  cmc_field_create("interfaces", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true, &ifaces);
+  cmc_field_create("interfaces", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true,
+                   &ifaces);
   cmc_field_add_nested_field(ifcfg, ifaces);
 
   cmc_field_create("", cmc_ConfigFieldTypeEnum_STRING, NULL, true, &iface0);
   cmc_field_add_nested_field(ifaces, iface0);
 
-  cmc_field_create("lease_database", cmc_ConfigFieldTypeEnum_DICT, NULL, true, &lease);
+  cmc_field_create("lease_database", cmc_ConfigFieldTypeEnum_DICT, NULL, true,
+                   &lease);
   cmc_field_add_next_field(ifcfg, lease);
 
   cmc_field_create("type", cmc_ConfigFieldTypeEnum_STRING, NULL, true, &type);
   cmc_field_add_nested_field(lease, type);
 
-  cmc_field_create("persist", cmc_ConfigFieldTypeEnum_STRING, NULL, true, &persist);
+  cmc_field_create("persist", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
+                   &persist);
   cmc_field_add_next_field(type, persist);
 
   cmc_field_create("name", cmc_ConfigFieldTypeEnum_STRING, NULL, true, &name);
   cmc_field_add_next_field(persist, name);
 
-  cmc_field_create("subnet4", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true, &subnets);
+  cmc_field_create("subnet4", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true,
+                   &subnets);
   cmc_field_add_next_field(lease, subnets);
 
   cmc_field_create("", cmc_ConfigFieldTypeEnum_DICT, NULL, true, &subnet);
   cmc_field_add_nested_field(subnets, subnet);
 
-  cmc_field_create("subnet", cmc_ConfigFieldTypeEnum_STRING, NULL, true, &subnet_val);
+  cmc_field_create("subnet", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
+                   &subnet_val);
   cmc_field_add_nested_field(subnet, subnet_val);
 
   cmc_field_create("pools", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true, &pools);
@@ -908,22 +1061,27 @@ void test_parse_full_kea_env_file(void) {
   cmc_field_create("", cmc_ConfigFieldTypeEnum_DICT, NULL, true, &pool_dict);
   cmc_field_add_nested_field(pools, pool_dict);
 
-  cmc_field_create("pool", cmc_ConfigFieldTypeEnum_STRING, NULL, true, &pool_val);
+  cmc_field_create("pool", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
+                   &pool_val);
   cmc_field_add_nested_field(pool_dict, pool_val);
 
-  cmc_field_create("option_data", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true, &opts);
+  cmc_field_create("option_data", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true,
+                   &opts);
   cmc_field_add_next_field(pools, opts);
 
   cmc_field_create("", cmc_ConfigFieldTypeEnum_DICT, NULL, true, &opt0);
   cmc_field_add_nested_field(opts, opt0);
 
-  cmc_field_create("name", cmc_ConfigFieldTypeEnum_STRING, NULL, true, &opt0_name);
+  cmc_field_create("name", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
+                   &opt0_name);
   cmc_field_add_nested_field(opt0, opt0_name);
 
-  cmc_field_create("data", cmc_ConfigFieldTypeEnum_STRING, NULL, true, &opt0_data);
+  cmc_field_create("data", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
+                   &opt0_data);
   cmc_field_add_next_field(opt0_name, opt0_data);
 
-  cmc_field_create("valid_lifetime", cmc_ConfigFieldTypeEnum_INT, NULL, true, &lifetime);
+  cmc_field_create("valid_lifetime", cmc_ConfigFieldTypeEnum_INT, NULL, true,
+                   &lifetime);
   cmc_field_add_next_field(subnets, lifetime);
 
   // Parse using the ENV parser directly
@@ -959,10 +1117,10 @@ void test_parse_full_kea_env_file(void) {
   opt1 = opt0->next_field;
   TEST_ASSERT_NOT_NULL(opt1);
   opt1_name = opt1->value;
-  TEST_ASSERT_NOT_NULL(opt1_name);  
+  TEST_ASSERT_NOT_NULL(opt1_name);
   opt1_data = opt1_name->next_field;
-  TEST_ASSERT_NOT_NULL(opt1_data);  
-  
+  TEST_ASSERT_NOT_NULL(opt1_data);
+
   cmc_field_get_str(opt1_name, &s);
   TEST_ASSERT_EQUAL_STRING("domain-name-servers", s);
   cmc_field_get_str(opt1_data, &s);
