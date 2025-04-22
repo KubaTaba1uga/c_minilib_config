@@ -15,6 +15,7 @@ void cmc_tree_node_destroy(struct cmc_TreeNode *node);
 
 cmc_error_t cmc_tree_node_add_subnode(const struct cmc_TreeNode *subnode,
                                       struct cmc_TreeNode *node);
+cmc_error_t cmc_tree_node_pop_subnode(struct cmc_TreeNode *node);
 
 #define CMC_TREE_SUBNODES_ITER(var, node)                                      \
   struct cmc_TreeNode *var;                                                    \

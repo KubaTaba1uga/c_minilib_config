@@ -1,7 +1,7 @@
 # File: test/test_cmc_env_parser.d/meson.build
 configs = {
   'default': '-DCONFIG_PATH="@0@/config"',
-  # 'array': '-DARRAY_CONFIG_PATH="@0@/array"',
+  'array': '-DARRAY_CONFIG_PATH="@0@/array"',
   # 'array_nested': '-DARRAY_NESTED_CONFIG_PATH="@0@/array_nested"',
   # 'dict': '-DDICT_CONFIG_PATH="@0@/dict"',
   # 'kea': '-DKEA_CONFIG_PATH="@0@/kea"',
