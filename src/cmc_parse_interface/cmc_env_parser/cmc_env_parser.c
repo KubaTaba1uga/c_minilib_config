@@ -185,7 +185,6 @@ static cmc_error_t _cmc_env_parser_parse_array_field(
       if (i - 1 > 0) {
         // We are only cleaning up fields that we made.
         cmc_field_destroy(&subfield);
-
         // because array is not empty we set up found_value to true
         *found_value = true;
       }
@@ -419,16 +418,25 @@ static cmc_error_t _cmc_field_deep_clone(struct cmc_ConfigField *src,
     copy->value = cloned_value;
 
   } else {
-    // Only atomic types here
-    CMC_FIELD_ITER(next_field, src) {
-      struct cmc_ConfigField *next_copy;
+    /* Only atomic types here */
+    struct cmc_ConfigField *current_field = src;
+    struct cmc_ConfigField *current_field_cp = copy;
+
+    while (current_field && current_field->next_field) {
+      struct cmc_ConfigField *next_field = current_field->next_field;
+
+      printf("\n`next_field->name=%s, `current->name=%s`\n", next_field->name,
+             current_field->name);
+
+      struct cmc_ConfigField *next_field_cp = NULL;
       err = cmc_field_create(next_field->name, next_field->type, NULL,
-                             next_field->optional, &next_copy);
+                             next_field->optional, &next_field_cp);
       if (err) {
         return err;
       }
 
-      copy->next_field = next_copy;
+      current_field_cp->next_field = next_field_cp;
+      current_field = next_field;
     }
   }
 

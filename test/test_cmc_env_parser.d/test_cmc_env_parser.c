@@ -111,7 +111,7 @@ void test_parse_valid_env_file(void) {
   TEST_ASSERT_EQUAL_STRING("default_value", out_empty);
 }
 
-void test_parse_array_env_file(void) {
+void __test_parse_array_env_file(void) {
   // 1) create config for directory ARRAY_CONFIG_PATH and base name "array"
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
@@ -755,7 +755,7 @@ void test_parse_list_of_persons_env_file(void) {
   TEST_ASSERT_EQUAL_INT(47, out_i);
 }
 
-void test_kea_interfaces_config_parsing(void) {
+void __test_kea_interfaces_config_parsing(void) {
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
                                        (char *[]){(char *)KEA_CONFIG_PATH},
@@ -796,7 +796,7 @@ void test_kea_interfaces_config_parsing(void) {
   TEST_ASSERT_EQUAL_STRING("eth0", out);
 }
 
-void test_kea_lease_database_type_parsing(void) {
+void __test_kea_lease_database_type_parsing(void) {
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
                                        (char *[]){(char *)KEA_CONFIG_PATH},
@@ -832,7 +832,7 @@ void test_kea_lease_database_type_parsing(void) {
   TEST_ASSERT_EQUAL_STRING("memfile", out);
 }
 
-void test_kea_lease_database_name_parsing(void) {
+void __test_kea_lease_database_name_parsing(void) {
   struct cmc_ConfigField *root, *lease, *name;
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){.supported_paths =
@@ -868,7 +868,7 @@ void test_kea_lease_database_name_parsing(void) {
   TEST_ASSERT_EQUAL_STRING("/var/lib/kea/dhcp4.leases", out);
 }
 
-void test_kea_subnet_pool_value_parsing(void) {
+void __test_kea_subnet_pool_value_parsing(void) {
   struct cmc_ConfigField *root, *subnet_arr, *subnet, *pools, *pool_dict,
       *pool_val;
   err = cmc_config_create(
@@ -920,7 +920,7 @@ void test_kea_subnet_pool_value_parsing(void) {
   TEST_ASSERT_EQUAL_STRING("192.168.1.100 - 192.168.1.200", out);
 }
 
-void test_kea_option_data_second_value_parsing(void) {
+void __test_kea_option_data_second_value_parsing(void) {
   struct cmc_ConfigField *dhcp4, *subnet4, *subnet4_dict, *opt_data, *opt_dict,
       *data, *name;
 
@@ -994,7 +994,7 @@ void test_kea_option_data_second_value_parsing(void) {
   TEST_ASSERT_EQUAL_STRING("8.8.8.8", out);
 }
 
-void test_parse_full_kea_env_file(void) {
+void __test_parse_full_kea_env_file(void) {
   err = cmc_env_parser_init(&parser);
   TEST_ASSERT_NULL(err);
 

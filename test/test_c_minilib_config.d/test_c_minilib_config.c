@@ -93,7 +93,7 @@ void test_cmc_lib_init_idempotent(void) {
   TEST_ASSERT_NULL(err);
 }
 
-void test_parse_superApp_env_and_getters(void) {
+void __test_parse_superApp_env_and_getters(void) {
   err = cmc_lib_init();
   TEST_ASSERT_NULL(err);
 

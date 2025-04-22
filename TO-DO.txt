@@ -1,0 +1,3 @@
+1. fix memory leaks
+2. add iter for arr and dict
+3. improve interface to give options like add str, add dict, add array etc. goal here is to make api more user friendly

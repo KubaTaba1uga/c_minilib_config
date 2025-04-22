@@ -79,6 +79,7 @@ void cmc_config_destroy(struct cmc_Config **config) {
   }
 
   cmc_settings_destroy(&(*config)->settings);
+  /* cmc_field_destroy(&(*config)->fields); */
 
   struct cmc_ConfigField *field = (*config)->fields;
   while (field) {

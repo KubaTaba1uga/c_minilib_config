@@ -170,9 +170,15 @@ void cmc_field_destroy(struct cmc_ConfigField **field) {
       cmc_field_destroy(&nested_field);
       nested_field = next;
     }
+
+    
+    
+    
   } else {
     free(ptr->value); // Only free scalar value
   }
+
+
 
   free((*field)->name);
   free(*field);
