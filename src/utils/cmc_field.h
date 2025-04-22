@@ -3,6 +3,7 @@
 
 #include "c_minilib_config.h"
 #include "utils/cmc_error.h"
+#include "utils/cmc_tree.h"
 
 cmc_error_t cmc_field_create(const char *name,
                              const enum cmc_ConfigFieldTypeEnum type,
@@ -17,13 +18,17 @@ cmc_error_t cmc_field_add_value_int(struct cmc_ConfigField *field,
 
 void cmc_field_destroy(struct cmc_ConfigField **field);
 
-#define CMC_FIELD_ITER(var, field)                                             \
-  for (struct cmc_ConfigField *var = (field); (var) != NULL;                   \
-       (var) = (var)->next_field)
+static inline struct cmc_ConfigField *
+cmc_field_of_node(struct cmc_TreeNode *node_ptr) {
+  return cmc_container_of(node_ptr, struct cmc_ConfigField, _self);
+};
 
-/* static inline struct cmc_ConfigField *cmc_field_of_node(struct cmc_tree_node
- * *node_ptr){ */
-/*   return cmc_container_of(node_ptr, struct cmc_ConfigField, self); */
-/* }; */
+#define CMC_SUBFIELDS_ITER(var, field)                                         \
+  struct cmc_TreeNode *__##var;                                                \
+  struct cmc_ConfigField *var;                                                 \
+  for (uint32_t _i = 0;                                                        \
+       _i < (field)->_self.subfields_len && (__##var) =                        \
+           (field)->self.subnodes[_i] && (var) = cmc_field_of_node(__##var);   \
+       _i++;)
 
 #endif // C_MINILIB_CONFIG_CMC_FIELD_H

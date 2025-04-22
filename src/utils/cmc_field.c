@@ -5,11 +5,13 @@
 
 #include "c_minilib_config.h"
 #include "utils/cmc_field.h"
+#include "utils/cmc_tree.h"
 
 static inline cmc_error_t cmc_alloc_field_value_str(const char *value,
                                                     void **field_value);
 static inline cmc_error_t cmc_alloc_field_value_int(const int32_t value,
                                                     void **field_value);
+static void cmc_field_value_destroy(struct cmc_ConfigField **field);
 
 cmc_error_t cmc_field_create(const char *name,
                              const enum cmc_ConfigFieldTypeEnum type,
@@ -40,6 +42,11 @@ cmc_error_t cmc_field_create(const char *name,
     goto error_field_cleanup;
   }
 
+  err = cmc_tree_node_create(&local_field->_self);
+  if (err) {
+    goto error_field_cleanup;
+  }
+
   if (!optional) {
     default_value = NULL;
   }
@@ -64,7 +71,6 @@ cmc_error_t cmc_field_create(const char *name,
   }
 
   local_field->optional = optional;
-  local_field->next_field = NULL;
   local_field->type = type;
   *field = local_field;
 
@@ -78,8 +84,8 @@ error_out:
   return err;
 };
 
-cmc_error_t cmc_field_add_nested_field(struct cmc_ConfigField *field,
-                                       struct cmc_ConfigField *child_field) {
+cmc_error_t cmc_field_add_subfield(struct cmc_ConfigField *field,
+                                   struct cmc_ConfigField *child_field) {
   cmc_error_t err;
 
   if (!field || !child_field) {
@@ -89,9 +95,8 @@ cmc_error_t cmc_field_add_nested_field(struct cmc_ConfigField *field,
   }
 
   switch (field->type) {
-  case cmc_ConfigFieldTypeEnum_DICT:
   case cmc_ConfigFieldTypeEnum_ARRAY:
-    child_field->optional = field->optional;
+  case cmc_ConfigFieldTypeEnum_DICT:
     break;
   default:
     err = cmc_errorf(EINVAL, "`field->type=%d` cannot be used as container\n",
@@ -99,24 +104,12 @@ cmc_error_t cmc_field_add_nested_field(struct cmc_ConfigField *field,
     goto error_out;
   }
 
-  field->value = child_field;
+  child_field->optional = field->optional;
 
-  return NULL;
-error_out:
-  return err;
-}
-
-cmc_error_t cmc_field_add_next_field(struct cmc_ConfigField *field,
-                                     struct cmc_ConfigField *next_field) {
-  cmc_error_t err;
-
-  if (!field || !next_field) {
-    err = cmc_errorf(EINVAL, "`field=%p` and `next_field=%p` cannot be NULL\n",
-                     field, next_field);
+  err = cmc_tree_node_add_subnode(&child_field->_self, &field->_self);
+  if (err) {
     goto error_out;
   }
-
-  field->next_field = next_field;
 
   return NULL;
 error_out:
@@ -155,43 +148,17 @@ cmc_error_t cmc_field_get_int(const struct cmc_ConfigField *field,
   return NULL;
 };
 
-void cmc_field_value_destroy(struct cmc_ConfigField **field) {
-  if (!field || !*field) {
-    return;
-  }
-
-  struct cmc_ConfigField *ptr = *field;
-
-  if (ptr->value && (ptr->type == cmc_ConfigFieldTypeEnum_ARRAY ||
-                     ptr->type == cmc_ConfigFieldTypeEnum_DICT)) {
-    struct cmc_ConfigField *nested_field = ptr->value;
-    cmc_field_destroy(&nested_field);
-  } else {
-    free(ptr->value); // Only free scalar value
-  }
-
-  ptr->value = NULL;
-}
-
-void cmc_field_next_destroy(struct cmc_ConfigField **field) {
-  if (!field || !*field) {
-    return;
-  }
-
-  struct cmc_ConfigField *current = *field;
-
-  cmc_field_destroy(&current->next_field);
-
-  (*field)->next_field = NULL;
-}
-
 void cmc_field_destroy(struct cmc_ConfigField **field) {
   if (!field || !*field) {
     return;
   }
 
+  CMC_TREE_SUBNODES_ITER(subnode, (*field)->_self) {
+    struct cmc_ConfigField *subfield = cmc_field_of_node(subnode);
+    cmc_field_destroy(&subfield);
+  }
+
   cmc_field_value_destroy(field);
-  cmc_field_next_destroy(field);
   free((*field)->name);
   free((*field));
   *field = NULL;
@@ -276,4 +243,16 @@ static inline cmc_error_t cmc_alloc_field_value_int(const int32_t value,
   *field_value = local_int;
 
   return NULL;
+}
+
+static void cmc_field_value_destroy(struct cmc_ConfigField **field) {
+  if (!field || !*field) {
+    return;
+  }
+
+  struct cmc_ConfigField *ptr = *field;
+
+  free(ptr->value); // Only free scalar value
+
+  ptr->value = NULL;
 }

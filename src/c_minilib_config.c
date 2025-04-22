@@ -16,6 +16,7 @@
 #include "utils/cmc_field.h"
 #include "utils/cmc_settings.h"
 #include "utils/cmc_string.h"
+#include "utils/cmc_tree.h"
 
 static struct cmc_ConfigParseInterface parsers[cmc_ConfigParseFormat_MAX];
 static int32_t parsers_length = 0;
@@ -51,6 +52,11 @@ cmc_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,
     goto error_out;
   }
 
+  err = cmc_tree_node_create(&local_config->_fields);
+  if (err) {
+    goto error_config_cleanup;
+  }
+
   if (!settings) {
     err = cmc_settings_create(0, NULL, NULL, NULL, &local_config->settings);
   } else {
@@ -62,7 +68,6 @@ cmc_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,
     goto error_config_cleanup;
   }
 
-  local_config->fields = NULL;
   *config = local_config;
 
   return NULL;
@@ -79,7 +84,11 @@ void cmc_config_destroy(struct cmc_Config **config) {
   }
 
   cmc_settings_destroy(&(*config)->settings);
-  cmc_field_destroy(&(*config)->fields);
+
+  CMC_TREE_SUBNODES_ITER(subnode, (*config)->_fields) {
+    struct cmc_ConfigField *subfield = cmc_field_of_node(subnode);
+    cmc_field_destroy(&subfield);
+  }
 
   free(*config);
 
@@ -96,8 +105,10 @@ cmc_error_t cmc_config_add_field(struct cmc_ConfigField *field,
     goto error_out;
   }
 
-  field->next_field = config->fields;
-  config->fields = field;
+  err = cmc_tree_node_add_subnode(&field->_self, &config->_fields);
+  if (err) {
+    goto error_out;
+  }
 
   return NULL;
 

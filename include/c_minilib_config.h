@@ -41,6 +41,11 @@ static inline void cmc_error_destroy(cmc_error_t *error) {
   cme_error_destroy((struct cme_Error *)*error);
 }
 
+struct cmc_TreeNode {
+  struct cmc_TreeNode **subnodes;
+  uint32_t subnodes_len;
+};
+
 /******************************************************************************
  *                             Field                                          *
  ******************************************************************************/
@@ -53,14 +58,12 @@ enum cmc_ConfigFieldTypeEnum {
   cmc_ConfigFieldTypeEnum_MAX,
 };
 
-struct cmc_tree_node;
 struct cmc_ConfigField {
-  /* struct cmc_tree_node self; */
   char *name;
   void *value;
   bool optional;
-  struct cmc_ConfigField *next_field;
   enum cmc_ConfigFieldTypeEnum type;
+  struct cmc_TreeNode _self;
 };
 
 // This function allocates memory, there is no destruct because all
@@ -69,10 +72,8 @@ cmc_error_t cmc_field_create(const char *name,
                              const enum cmc_ConfigFieldTypeEnum type,
                              const void *default_value, const bool optional,
                              struct cmc_ConfigField **field);
-cmc_error_t cmc_field_add_nested_field(struct cmc_ConfigField *field,
-                                       struct cmc_ConfigField *child_field);
-cmc_error_t cmc_field_add_next_field(struct cmc_ConfigField *field,
-                                     struct cmc_ConfigField *next_field);
+cmc_error_t cmc_field_add_subfield(struct cmc_ConfigField *field,
+                                   struct cmc_ConfigField *child_field);
 cmc_error_t cmc_field_get_str(const struct cmc_ConfigField *field,
                               char **output);
 cmc_error_t cmc_field_get_int(const struct cmc_ConfigField *field, int *output);
@@ -95,8 +96,8 @@ struct cmc_ConfigSettings {
 };
 
 struct cmc_Config {
-  struct cmc_ConfigField *fields;
   struct cmc_ConfigSettings *settings;
+  struct cmc_TreeNode _fields;
 };
 
 // Config is basically collection for fields

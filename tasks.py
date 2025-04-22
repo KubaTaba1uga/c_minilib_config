@@ -85,7 +85,7 @@ def test(c, name=None):
 
     # Add test name(s) if provided
     if name:
-        name_args = " ".join([f"--suite {n}" for n in name])
+        name_args = " ".join(name)
         cmd += f" {name_args}"
 
     _run_command(c, cmd)

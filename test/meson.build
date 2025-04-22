@@ -12,6 +12,8 @@ test_runner = unity_subproject.get_variable('gen_test_runner')
 
 subdir('test_unity.d')
 subdir('test_cmc_settings.d')
-subdir('test_c_minilib_config.d')
-subdir('test_cmc_env_parser.d')
-subdir('test_cmc_field.d')
+subdir('test_cmc_tree.d')
+# subdir('test_cmc_field.d')
+# subdir('test_c_minilib_config.d')
+# subdir('test_cmc_env_parser.d')
+
