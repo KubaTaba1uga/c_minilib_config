@@ -382,7 +382,7 @@ static cmc_error_t _cmc_field_deep_clone(struct cmc_ConfigField *src,
     return err;
   }
 
-  CMC_FIELD_FOREACH(subfield, src, {
+  CMC_FOREACH_FIELD(subfield, src, {
     struct cmc_ConfigField *subfield_cp;
     err = _cmc_field_deep_clone(subfield, &subfield_cp);
     if (err) {
@@ -421,7 +421,7 @@ static cmc_error_t _cmc_env_parser_parse_dict_field(
   int32_t found_i = 0;
   cmc_error_t err;
 
-  CMC_FIELD_FOREACH(subfield, field, {
+  CMC_FOREACH_FIELD(subfield, field, {
     char *old_subfield_name = subfield->name;
     char *new_subfield_name =
         _cmc_env_parser_create_dict_name(field->name, subfield->name);

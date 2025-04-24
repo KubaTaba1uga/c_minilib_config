@@ -158,7 +158,7 @@ void test_iter_array_macro_should_visit_all_elements(void) {
   cmc_field_add_subfield(arr, elem2);
 
   int count = 0;
-  CMC_FIELD_FOREACH_ARRAY(val, char *, &arr, {
+  CMC_FOREACH_FIELD_ARRAY(val, char *, &arr, {
     if (count == 0) {
       TEST_ASSERT_EQUAL_STRING("hello", val);
     } else if (count == 1) {
@@ -182,7 +182,7 @@ void test_iter_dict_macro_should_visit_all_entries(void) {
   cmc_field_add_subfield(dict, f2);
 
   int sum = 0, matched = 0;
-  CMC_FIELD_FOREACH_DICT(val, int *, &dict, {
+  CMC_FOREACH_FIELD_DICT(val, int *, &dict, {
     if (strcmp(val_name, "key1") == 0) {
       TEST_ASSERT_EQUAL_INT(10, *val);
       matched++;
@@ -222,8 +222,8 @@ void test_iter_array_macro_should_visit_all_nested_elements(void) {
   cmc_field_add_subfield(arr, nested);
 
   int count = 0;
-  CMC_FIELD_FOREACH_ARRAY(val, void *, &arr, {
-    struct cmc_ConfigField *subfield = cmc_field_of_node(__valsubnode);
+  CMC_FOREACH_FIELD_ARRAY(val, void *, &arr, {
+    struct cmc_ConfigField *subfield = __val_subfield;
     switch (subfield->type) {
     case cmc_ConfigFieldTypeEnum_STRING: {
       if (count == 0) {
@@ -234,7 +234,7 @@ void test_iter_array_macro_should_visit_all_nested_elements(void) {
       break;
     }
     case cmc_ConfigFieldTypeEnum_ARRAY: {
-      CMC_FIELD_FOREACH_ARRAY(nval, char *, &subfield, {
+      CMC_FOREACH_FIELD_ARRAY(nval, char *, &subfield, {
         TEST_ASSERT_EQUAL_STRING("nested-value", nval);
       });
       break;
