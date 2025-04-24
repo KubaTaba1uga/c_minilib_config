@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -108,6 +109,8 @@ cmc_error_t cmc_field_add_subfield(struct cmc_ConfigField *field,
   if (err) {
     goto error_out;
   }
+
+  printf("%s=%d\n", field->name, field->_self.subnodes_len);
 
   return NULL;
 error_out:

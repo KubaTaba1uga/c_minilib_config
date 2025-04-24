@@ -309,20 +309,21 @@ static cmc_error_t _cmc_env_parser_parse_array_field(
   int32_t i = 0;
 
   while (true) {
-    char *array_node_name = _cmc_env_parser_create_array_name(field->name, i);
-    if (!array_node_name) {
+    struct cmc_ConfigField *subfield =
+        cmc_field_of_node(field->_self.subnodes[i]);
+    /* char **subfield_old_name = subfield->name; */
+    char *subfield_new_name = _cmc_env_parser_create_array_name(field->name, i);
+    if (!subfield_new_name) {
       err =
           cmc_errorf(EINVAL, "Unable to allocate memory for `array_elem_name`");
       goto error_out;
     }
-    struct cmc_ConfigField *array_node_field =
-        cmc_field_of_node(field->_self.subnodes[i]);
-    free(array_node_field->name);
-    array_node_field->name = array_node_name;
+    free(subfield->name);
+    subfield->name = subfield_new_name;
 
     bool local_found_value = true;
-    err = _cmc_env_parser_parse_field(config_file, array_node_field,
-                                      &local_found_value);
+    err =
+        _cmc_env_parser_parse_field(config_file, subfield, &local_found_value);
     if (err) {
       goto error_out;
     }
@@ -332,7 +333,7 @@ static cmc_error_t _cmc_env_parser_parse_array_field(
     }
 
     struct cmc_ConfigField *new_node_field = NULL;
-    err = _cmc_field_deep_clone(array_node_field, &new_node_field);
+    err = _cmc_field_deep_clone(subfield, &new_node_field);
     if (err) {
       goto error_out;
     }
@@ -422,14 +423,17 @@ static cmc_error_t _cmc_env_parser_parse_dict_field(
 
   CMC_TREE_SUBNODES_ITER(subnode, field->_self) {
     struct cmc_ConfigField *subfield = cmc_field_of_node(subnode);
-    char *dict_node_name =
+    char *old_subfield_name = subfield->name;
+    char *new_subfield_name =
         _cmc_env_parser_create_dict_name(field->name, subfield->name);
-    free(subfield->name);
-    subfield->name = dict_node_name;
+    /* free(subfield->name); */
+    subfield->name = new_subfield_name;
 
     bool local_found_value = true;
     err =
         _cmc_env_parser_parse_field(config_file, subfield, &local_found_value);
+    subfield->name = old_subfield_name;
+    free(new_subfield_name);
     if (err) {
       goto error_out;
     }
