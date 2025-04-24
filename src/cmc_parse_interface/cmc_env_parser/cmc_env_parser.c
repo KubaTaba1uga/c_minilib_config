@@ -38,10 +38,11 @@ cmc_env_parser_parse_field(FILE *config_file, struct cmc_ConfigField *field,
 static cmc_error_t cmc_env_parser_parse_str_and_int_field(
     FILE *config_file, struct cmc_ConfigField *field, bool *found_value,
     struct cmc_ConfigSettings *settings);
-static cmc_error_t cmc_env_parser_parse_single_line(char *buffer,
-                                                    uint32_t buffer_max,
-                                                    char **env_name,
-                                                    char **env_value);
+static cmc_error_t
+cmc_env_parser_parse_single_line(char *buffer,        // NOLINT
+                                 uint32_t buffer_max, // NOLINT
+                                 char **name,         // NOLINT
+                                 char **value);       // NOLINT
 static cmc_error_t cmc_env_parser_parse_array_field(
     FILE *config_file, struct cmc_ConfigField *field, bool *found_value,
     struct cmc_ConfigSettings *settings);
@@ -271,10 +272,10 @@ error_out:
   return err;
 }
 
-static cmc_error_t cmc_env_parser_parse_single_line(char *buffer,
-                                                    uint32_t buffer_max,
-                                                    char **env_name,
-                                                    char **env_value) {
+static cmc_error_t
+cmc_env_parser_parse_single_line(char *buffer,                // NOLINT
+                                 uint32_t buffer_max,         // NOLINT
+                                 char **name, char **value) { // NOLINT
   const char delimeter = '=';
   char *delimeter_ptr;
   cmc_error_t err;
@@ -311,16 +312,16 @@ static cmc_error_t cmc_env_parser_parse_single_line(char *buffer,
     env_field_value[env_field_value_len - 1] = 0;
   }
 
-  *env_name = strdup(env_field_name);
-  if (!*env_name) {
+  *name = strdup(env_field_name);
+  if (!*name) {
     err =
         cmc_errorf(EINVAL, "Unable to allocate memory for `env_field_name=%s`",
                    env_field_name);
     return err;
   }
 
-  *env_value = strdup(env_field_value);
-  if (!*env_value) {
+  *value = strdup(env_field_value);
+  if (!*value) {
     err =
         cmc_errorf(EINVAL, "Unable to allocate memory for `env_field_value=%s`",
                    env_field_value);
