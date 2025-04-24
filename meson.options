@@ -1,5 +1,5 @@
 option('backtrace',
-  type: 'boolean',
-  value: false,
-  description: 'Enable backtrace support for debugging'
+  type: 'feature',
+  value: 'auto',
+  description: 'Enable backtrace support in cmc_error_t'
 )
