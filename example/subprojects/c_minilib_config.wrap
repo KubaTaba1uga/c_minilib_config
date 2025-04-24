@@ -1,5 +1,5 @@
 [wrap-git]
 directory = c_minilib_config
 url = https://github.com/KubaTaba1uga/c_minilib_config.git
-revision = head
+revision = master
 depth = 1

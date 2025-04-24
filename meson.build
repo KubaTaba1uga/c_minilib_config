@@ -24,7 +24,10 @@ add_project_arguments('-D_POSIX_C_SOURCE=200809L', language: 'c')
 subdir('src')
 
 cmx_error_sub = subproject('c_minilib_error')
-cmx_error_dep = cmx_error_sub.get_variable('cmx_error_dep')
+cmx_error_dep = dependency('c_minilib_error',
+  fallback: ['c_minilib_error', 'cmx_error_dep'],
+  required: true,
+)
 
 cmx_config_inc = include_directories('include', 'src')
 cmx_config_lib = library('cmx_config',
