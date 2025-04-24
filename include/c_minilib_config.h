@@ -12,23 +12,43 @@
 //////
 /******************************************************************************
 
- There are copule convetions we are following:
-   - all non atomic types are pointers.
+ C minilib config is library designed for small to midsize configs.
+ Supported config fields are:
+  - integer
+  - str
+  - array
+  - dict
+
+ Supported config files formats are:
+  - Environment variables
+
+ Environment variables have to be represented in `key=value` syntax.
+ For array we are using flat structure where array indexing is pushed into
+ naming scheme. So for array like `a = [1,2,3]` we are doing:
+ ```
+ A_0=1
+ A_1=2
+ A_2=3
+ ```
+ Indexes are put inside keys so we are not requireing any custom list format and
+  we support list and dicts nestings.
+
+ There are copule convetions we are following in code:
    - input args are marked with const, we never modify input args.
-   - output args are not marked with const, we always modify output args.
+   - output args are not marked with const, we always modify output args on func
+ success.
+   - on func error we are always returning cmc_error_t. On error output args
+ should not be modified.
+   - functions with create in name always allocates memory on success. It is
+ regarding obj itself as well as obj attributes. Something created always needs
+ to be destroyed.
+   - functions with init in name always initializes data but do necessarly
+ allocate anything. Init func will never allocate memory for obj itself, however
+ it may allocate mamory intenrally or using obj attribute. Init func sometimes
+ is paired with destroy func if any allocations indieed occur.
 
  ******************************************************************************/
 //////////
-
-/*
- Usage example:
-    char *paths[] = { "abc", "def", NULL };
-    struct cmc_ConfigSettings settings = {
-        .supported_paths = paths,
-        .name_override = NULL,
-        .log_func = NULL,
-    };
-*/
 
 /******************************************************************************
  *                             General                                        *
@@ -71,8 +91,14 @@ struct cmc_ConfigField {
   struct cmc_TreeNode _self;
 };
 
-// This function allocates memory, there is no destruct because all
-//  fields are freed on config destruct.
+struct cmc_ConfigFieldIterator {
+  const struct cmc_ConfigField *parent;
+  uint32_t index;
+};
+
+// This function allocates memory, there is no need for exposing field destroy
+// to user
+//   because all fields (and their values) are freed on config destroy.
 cmc_error_t cmc_field_create(const char *name,
                              const enum cmc_ConfigFieldTypeEnum type,
                              const void *default_value, const bool optional,
@@ -84,7 +110,7 @@ cmc_error_t cmc_field_get_str(const struct cmc_ConfigField *field,
 cmc_error_t cmc_field_get_int(const struct cmc_ConfigField *field, int *output);
 
 /******************************************************************************
- *                             Config *
+ *                             Config
  ******************************************************************************/
 enum cmc_LogLevelEnum {
   cmc_LogLevelEnum_ERROR,
@@ -105,7 +131,7 @@ struct cmc_Config {
   struct cmc_TreeNode _fields;
 };
 
-// Config is basically collection for fields
+// This function allocates memory, which needs to be destroyed.
 cmc_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,
                               struct cmc_Config **config);
 // Add fields to config

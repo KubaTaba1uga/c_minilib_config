@@ -23,4 +23,21 @@ cmc_field_of_node(struct cmc_TreeNode *node_ptr) {
   return cmc_container_of(node_ptr, struct cmc_ConfigField, _self);
 };
 
+#define CMC_FIELD_ITER_ARRAY(var, type, field, func)                           \
+  CMC_TREE_SUBNODES_ITER(__##var##subnode, (*field)->_self) {                  \
+    struct cmc_ConfigField *__##var##_subfield =                               \
+        cmc_field_of_node(__##var##subnode);                                   \
+    type var = __##var##_subfield->value;                                      \
+    func                                                                       \
+  }
+
+#define CMC_FIELD_ITER_DICT(var, type, field, func)                            \
+  CMC_TREE_SUBNODES_ITER(__##var##subnode, (*field)->_self) {                  \
+    struct cmc_ConfigField *__##var##_subfield =                               \
+        cmc_field_of_node(__##var##subnode);                                   \
+    char *var##_name = __##var##_subfield->name;                               \
+    type var = __##var##_subfield->value;                                      \
+    func                                                                       \
+  }
+
 #endif // C_MINILIB_CONFIG_CMC_FIELD_H
