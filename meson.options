@@ -1,0 +1,5 @@
+option('backtrace',
+  type: 'boolean',
+  value: false,
+  description: 'Enable backtrace support for debugging'
+)

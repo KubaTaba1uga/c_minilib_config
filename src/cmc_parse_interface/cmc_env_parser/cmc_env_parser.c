@@ -214,13 +214,20 @@ static cmc_error_t _cmc_env_parser_parse_str_and_int_field(
         free(field->value);
       }
 
+      int value;
       field->value = NULL;
       switch (field->type) {
       case cmc_ConfigFieldTypeEnum_STRING:
         err = cmc_field_add_value_str(field, env_field_value);
         break;
       case cmc_ConfigFieldTypeEnum_INT:
-        err = cmc_field_add_value_int(field, atoi(env_field_value));
+        err = cmc_convert_str_to_int(env_field_value, strlen(env_field_value),
+                                     &value);
+        if (err) {
+          goto error_out;
+        }
+
+        err = cmc_field_add_value_int(field, value);
         break;
       default:;
         err = cmc_errorf(ENOMEM, "Unrecognized value for `field->type=%d`\n",
