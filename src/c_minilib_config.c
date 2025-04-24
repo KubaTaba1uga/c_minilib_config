@@ -4,8 +4,8 @@
  * See LICENSE file in the project root for full license information.
  */
 
-#include <asm-generic/errno-base.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -126,7 +126,7 @@ error_out:
   return err;
 };
 
-cmc_error_t cmc_config_parse(struct cmc_Config *config) {
+cmc_error_t cmc_config_parse(struct cmc_Config *config) { // NOLINT
   struct cmc_ConfigParseInterface *parser;
   cmc_error_t err;
 
@@ -135,13 +135,13 @@ cmc_error_t cmc_config_parse(struct cmc_Config *config) {
     goto error_out;
   }
 
-  CMC_LOG(config->settings, cmc_LogLevelEnum_DEBUG,
-          "Starting configuration file parsing");
+  CMC_LOG(config->settings, cmc_LogLevelEnum_DEBUG, // NOLINT
+          "Starting configuration file parsing");   // NOLINT
 
   bool matched_parser = false;
 
   CMC_FOREACH_PTR(parser, parsers, parsers_length) {
-    err = parser->create(parser->data);
+    err = parser->create((cmc_ConfigParserData *)parser->data);
     if (err) {
       goto error_out;
     }
@@ -149,12 +149,14 @@ cmc_error_t cmc_config_parse(struct cmc_Config *config) {
     /* Search supported paths to find matching configuration file. */
     /* Once we have first match search is stopped and parsing occurs. */
     char *dir_path;
+    char file_path[PATH_MAX];
     CMC_FOREACH(dir_path, config->settings->supported_paths,
                 config->settings->paths_length) {
-      CMC_JOIN_PATH_STACK(file_path, dir_path, config->settings->name);
+      cmc_join_path_stack(file_path, sizeof(file_path), dir_path,
+                          config->settings->name);
 
-      CMC_LOG(config->settings, cmc_LogLevelEnum_DEBUG,
-              "Checking %s configuration file", file_path);
+      CMC_LOG(config->settings, cmc_LogLevelEnum_DEBUG,     // NOLINT
+              "Checking %s configuration file", file_path); // NOLINT
 
       err = parser->is_format(sizeof(file_path) / sizeof(char), file_path,
                               &matched_parser);
@@ -163,13 +165,13 @@ cmc_error_t cmc_config_parse(struct cmc_Config *config) {
       }
 
       if (matched_parser) {
-        CMC_LOG(config->settings, cmc_LogLevelEnum_DEBUG,
-                "Using %s configuration file", file_path);
+        CMC_LOG(config->settings, cmc_LogLevelEnum_DEBUG,  // NOLINT
+                "Using %s configuration file", file_path); // NOLINT
 
         err = parser->parse(sizeof(file_path) / sizeof(char), file_path,
                             parser->data, config);
         if (err) {
-          parser->destroy(parser->data);
+          parser->destroy((cmc_ConfigParserData *)parser->data);
           goto error_out;
         }
 
@@ -178,11 +180,11 @@ cmc_error_t cmc_config_parse(struct cmc_Config *config) {
       }
     }
 
-    parser->destroy(parser->data);
+    parser->destroy((cmc_ConfigParserData *)parser->data);
 
     if (matched_parser) {
-      CMC_LOG(config->settings, cmc_LogLevelEnum_DEBUG,
-              "Finished configuration file parsing");
+      CMC_LOG(config->settings, cmc_LogLevelEnum_DEBUG, // NOLINT
+              "Finished configuration file parsing");   // NOLINT
       break;
     }
   }

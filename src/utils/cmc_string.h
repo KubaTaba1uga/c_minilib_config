@@ -15,14 +15,23 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define CMC_JOIN_PATH_STACK(varname, dir_path, config_name)                    \
-  /* 1 for `/` and ` for null byte  */                                         \
-  char varname[strlen(dir_path) + strlen(config_name) + 2];                    \
-  sprintf(varname, "%s/%s", dir_path, config_name)
+#include "utils/cmc_error.h"
 
-#define CMC_JOIN_STR_STACK(varname, str_a, str_b)                              \
-  char varname[strlen(str_a) + strlen(str_b) + 1];                             \
-  sprintf(varname, "%s%s", str_a, str_b)
+static inline void cmc_join_path_stack(char *out, size_t out_len,
+                                       const char *dir_path,
+                                       const char *config_name) {
+  // Ensure null-termination on failure
+  if (snprintf(out, out_len, "%s/%s", dir_path, config_name) >= (int)out_len) {
+    out[out_len - 1] = '\0';
+  }
+}
+
+static inline void cmc_join_str_stack(char *out, size_t out_len,
+                                      const char *prefix, const char *suffix) {
+  if (snprintf(out, out_len, "%s%s", prefix, suffix) >= (int)out_len) {
+    out[out_len - 1] = '\0';
+  }
+}
 
 static inline cmc_error_t cmc_convert_str_to_int(char *str, uint32_t n,
                                                  int *output) {

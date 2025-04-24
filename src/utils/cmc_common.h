@@ -17,13 +17,14 @@
 #define CMC_LOG(settings, level, fmt, ...)                                     \
   do {                                                                         \
     if ((settings) && (settings)->log_func) {                                  \
-      /* 1) compute needed length */                                           \
-      int _len = snprintf(NULL, 0, (fmt), ##__VA_ARGS__);                      \
-      /* 2) allocate on stack and format */                                    \
-      char _buf[_len + 1];                                                     \
-      snprintf(_buf, _len + 1, (fmt), ##__VA_ARGS__);                          \
-      /* 3) call user logger */                                                \
-      (settings)->log_func((level), _buf);                                     \
+      char _log_buf[1024];                                                     \
+      int _written =                                                           \
+          snprintf(_log_buf, sizeof(_log_buf), (fmt), ##__VA_ARGS__);          \
+      if (_written < 0 || _written >= (int)sizeof(_log_buf)) {                 \
+        strncpy(_log_buf, "[log message truncated]", sizeof(_log_buf) - 1);    \
+        _log_buf[sizeof(_log_buf) - 1] = '\0';                                 \
+      }                                                                        \
+      (settings)->log_func(level, _log_buf);                                   \
     }                                                                          \
   } while (0)
 
