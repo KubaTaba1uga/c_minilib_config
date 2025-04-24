@@ -110,8 +110,6 @@ cmc_error_t cmc_field_add_subfield(struct cmc_ConfigField *field,
     goto error_out;
   }
 
-  printf("%s=%d\n", field->name, field->_self.subnodes_len);
-
   return NULL;
 error_out:
   return err;
@@ -211,6 +209,9 @@ cmc_error_t cmc_field_add_value_int(struct cmc_ConfigField *field,
 error_out:
   return err;
 }
+struct cmc_ConfigField *cmc_field_of_node(struct cmc_TreeNode *node_ptr) {
+  return cmc_container_of(node_ptr, struct cmc_ConfigField, _self);
+};
 
 static inline cmc_error_t cmc_alloc_field_value_str(const char *value,
                                                     void **field_value) {
