@@ -11,3 +11,9 @@ build/*
 .cache
 example/.cache
 compile_commands.json
+subprojects/c_minilib_error
+subprojects/c_minilib_config
+subprojects/unity
+example/subprojects/c_minilib_error
+example/subprojects/c_minilib_config
+example/subprojects/unity
