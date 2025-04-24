@@ -3,7 +3,7 @@ configs = {
   'default': '-DCONFIG_PATH="@0@/config"',
   'array': '-DARRAY_CONFIG_PATH="@0@/array"',
   'dict': '-DDICT_CONFIG_PATH="@0@/dict"',
-  # 'kea': '-DKEA_CONFIG_PATH="@0@/kea"',
+  'kea': '-DKEA_CONFIG_PATH="@0@/kea"',
 }
 
 foreach cfg_name, define_arg : configs
