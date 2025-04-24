@@ -41,6 +41,11 @@ static inline void cmc_error_destroy(cmc_error_t *error) {
   cme_error_destroy((struct cme_Error *)*error);
 }
 
+// We need tree to represent configuration. Each key value pair is represented
+// internally as tree's node. Str or Int cannot have any leafs, while dict and
+// list can have as many leafs as they want. Usually this tree is invisible to
+// end user. If you need to traverse it just use one of `foreach` getter
+// provided for dict and list.
 struct cmc_TreeNode {
   struct cmc_TreeNode **subnodes;
   uint32_t subnodes_len;

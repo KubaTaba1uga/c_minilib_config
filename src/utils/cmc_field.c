@@ -104,8 +104,6 @@ cmc_error_t cmc_field_add_subfield(struct cmc_ConfigField *field,
     goto error_out;
   }
 
-  child_field->optional = field->optional;
-
   err = cmc_tree_node_add_subnode(&child_field->_self, &field->_self);
   if (err) {
     goto error_out;

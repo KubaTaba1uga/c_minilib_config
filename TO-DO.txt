@@ -1,3 +1,4 @@
 1. fix memory leaks
 2. add iter for arr and dict
 3. improve interface to give options like add str, add dict, add array etc. goal here is to make api more user friendly
+4. unify ITER and FOREACH idk why i have two names in parallel for tyhe same thing
