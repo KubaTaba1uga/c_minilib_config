@@ -8,7 +8,7 @@ c_minilib_config_dep = c_minilib_config_proj.get_variable('cmx_config_dep')
 c_minilib_config_inc = c_minilib_config_proj.get_variable('cmx_config_inc')
 
 executable('example',
-  'example.c',
+  'main.c',
   dependencies: [c_minilib_config_dep],
   include_directories: c_minilib_config_inc,
 )

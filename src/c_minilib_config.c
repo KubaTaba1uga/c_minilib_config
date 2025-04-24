@@ -42,6 +42,8 @@ cmc_error_t cmc_lib_init(void) {
   return NULL;
 };
 
+void cmc_lib_destroy(void) {}
+
 cmc_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,
                               struct cmc_Config **config) {
   struct cmc_Config *local_config;

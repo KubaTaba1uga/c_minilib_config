@@ -68,7 +68,7 @@ cmc_error_t cmc_lib_init(void);
 /**
  * Clean up global parser state. Call after all parsing is complete.
  */
-cmc_error_t cmc_lib_destroy(void);
+void cmc_lib_destroy(void);
 
 /**
  * Destroy a dynamically allocated error object.
