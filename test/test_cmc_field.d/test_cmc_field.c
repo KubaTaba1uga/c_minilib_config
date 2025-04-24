@@ -245,8 +245,7 @@ void test_iter_array_macro_should_visit_all_nested_elements(void) {
       });
       break;
     }
-    default: {
-    }
+    default:;
     }
     count++;
   });

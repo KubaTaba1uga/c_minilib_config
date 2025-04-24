@@ -169,7 +169,7 @@ struct cmc_ConfigField *cmc_field_of_node(struct cmc_TreeNode *node_ptr);
  * Specialized iterator for array of scalar types.
  */
 #define CMC_FOREACH_FIELD_ARRAY(var, type, field, func)                        \
-  CMC_TREE_SUBNODES_FOREACH(__##var##subnode, ((*(field))->_self) {	\
+  CMC_TREE_SUBNODES_FOREACH(__##var##subnode, ((*(field))->_self)) {           \
     struct cmc_ConfigField *__##var##_subfield =                               \
         cmc_field_of_node(__##var##subnode);                                   \
     type var = __##var##_subfield->value;                                      \
@@ -179,8 +179,8 @@ struct cmc_ConfigField *cmc_field_of_node(struct cmc_TreeNode *node_ptr);
 /**
  * Specialized iterator for dictionary of scalar types.
  */
-#define CMC_FOREACH_FIELD_DICT(var, type, field, func)                            \
-  CMC_TREE_SUBNODES_FOREACH(__##var##subnode, ((*(field))->_self) {             \
+#define CMC_FOREACH_FIELD_DICT(var, type, field, func)                         \
+  CMC_TREE_SUBNODES_FOREACH(__##var##subnode, ((*(field))->_self)) {           \
     struct cmc_ConfigField *__##var##_subfield =                               \
         cmc_field_of_node(__##var##subnode);                                   \
     char *var##_name = __##var##_subfield->name;                               \
