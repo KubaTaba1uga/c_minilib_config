@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y python3-invoke
+          inv install
+
+      - name: Build project
+        run: |
+          inv build -d
+
+      - name: Run tests
+        run: |
+          inv test
+
+      - name: Run linter
+        run: |
+          inv lint
