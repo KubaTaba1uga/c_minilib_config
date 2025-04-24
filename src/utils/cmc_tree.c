@@ -33,7 +33,7 @@ void cmc_tree_node_destroy(struct cmc_TreeNode *node) {
     return;
   }
 
-  free(node->subnodes);
+  free((void *)node->subnodes);
   node->subnodes = NULL;
   node->subnodes_len = 0;
 };
@@ -49,8 +49,9 @@ cmc_error_t cmc_tree_node_add_subnode(const struct cmc_TreeNode *subnode,
     goto error_out;
   }
 
-  local_subnodes = realloc(node->subnodes, (node->subnodes_len + 1) *
-                                               sizeof(struct cmc_TreeNode *));
+  local_subnodes = (struct cmc_TreeNode **)realloc(
+      (void *)node->subnodes,
+      (node->subnodes_len + 1) * sizeof(struct cmc_TreeNode *));
   if (!local_subnodes) {
     err =
         cmc_errorf(ENOMEM, "Unable to allocate moemory for `local_subnodes`\n");
@@ -81,8 +82,9 @@ cmc_error_t cmc_tree_node_pop_subnode(struct cmc_TreeNode *node) {
     goto error_out;
   }
 
-  local_subnodes = realloc(node->subnodes, (node->subnodes_len - 1) *
-                                               sizeof(struct cmc_TreeNode *));
+  local_subnodes = (struct cmc_TreeNode **)realloc(
+      (void *)node->subnodes,
+      (node->subnodes_len - 1) * sizeof(struct cmc_TreeNode *));
   if (!local_subnodes) {
     err =
         cmc_errorf(ENOMEM, "Unable to allocate moemory for `local_subnodes`\n");

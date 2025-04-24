@@ -76,6 +76,9 @@ cmc_error_t cmc_field_create(const char *name,
       goto error_field_name_cleanup;
     }
   }
+  if (err) {
+    goto error_field_cleanup;
+  }
 
   local_field->optional = optional;
   local_field->type = type;

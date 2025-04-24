@@ -1,2 +1,10 @@
+Checks: >
+  llvm-*,clang-analyzer-*,
+  performance-*,bugprone-*,
+  readability-*,
+  -llvm-header-guard,
+  -readability-avoid-const-params-in-decls,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling
+
 WarningsAsErrors: ''
-Checks: 'llvm-*,clang-analyzer-*,performance-*,bugprone-*,readability-*,-llvm-header-guard,-readability-avoid-const-params-in-decls'
+    

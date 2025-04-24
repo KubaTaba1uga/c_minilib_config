@@ -5,6 +5,7 @@
  */
 
 #include <errno.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,6 +13,19 @@
 
 #include "c_minilib_config.h"
 #include "utils/cmc_error.h"
+
+static char *safe_getcwd() {
+  char *buf = malloc(PATH_MAX);
+  if (!buf) {
+    return NULL;
+  }
+
+  if (!getcwd(buf, PATH_MAX)) {
+    free(buf);
+    return NULL;
+  }
+  return buf;
+}
 
 cmc_error_t cmc_settings_create(const uint32_t paths_length,
                                 const char **supported_paths, const char *name,
@@ -59,7 +73,7 @@ cmc_error_t cmc_settings_create(const uint32_t paths_length,
 
     // First we are injecting additional paths
     if (i == 0) {
-      local_settings->supported_paths[i] = getcwd(NULL, 0);
+      local_settings->supported_paths[i] = safe_getcwd();
     } else {
       // Here starts normal processing
       local_settings->supported_paths[i] =

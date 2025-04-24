@@ -11,11 +11,6 @@
 #include "utils/cmc_error.h"
 #include "utils/cmc_tree.h"
 
-cmc_error_t cmc_field_create(const char *name,
-                             const enum cmc_ConfigFieldTypeEnum type,
-                             const void *default_value, const bool optional,
-                             struct cmc_ConfigField **field);
-
 cmc_error_t cmc_field_add_value_str(struct cmc_ConfigField *field,
                                     const char *value);
 
