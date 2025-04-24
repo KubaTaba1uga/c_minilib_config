@@ -14,7 +14,7 @@
 #include "utils/cmc_common.h"
 
 #define cmc_container_of(ptr, type, member)                                    \
-  ((type *)((char *)(ptr)-offsetof(type, member)))
+  ((type *)((char *)(ptr) - offsetof(type, member)))
 
 cmc_error_t cmc_tree_node_create(struct cmc_TreeNode *node);
 void cmc_tree_node_destroy(struct cmc_TreeNode *node);

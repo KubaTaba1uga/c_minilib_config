@@ -129,7 +129,7 @@ error_out:
   return err;
 }
 
-static void _cmc_env_parser_destroy(cmc_ConfigParserData *data){
+static void _cmc_env_parser_destroy(cmc_ConfigParserData *data) {
 
 };
 
