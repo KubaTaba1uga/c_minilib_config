@@ -1,46 +1,113 @@
 # c_minilib_config
 
-`c_minilib_config` is a lightweight, modular C library designed to simplify application configuration management. It enables your application to effortlessly support multiple configuration formats (`.env`, `.json`, `.yaml`) using a unified, generic interface.
+**`c_minilib_config`** is a minimalist, extensible configuration parser written in C. It provides a unified, tree-based API for reading structured application configuration from `.env` files, with plans for future support of `.json` and `.yaml`.
 
-## Features
+## ✨ Features
 
-- **Unified Interface:** Seamlessly handle `.env`, `.json`, and `.yaml` files through one consistent C struct.
-- **Flexible Configuration Path:** Set your configuration file location dynamically via an environment variable.
-- **Minimal Dependencies:** Lightweight, easy to integrate, and designed for minimalist projects.
-- **Modular by Design:** Supports easy extension or customization for additional configuration formats.
+- **Structured Tree Representation**: Each config is parsed into a tree of typed fields (`int`, `string`, `array`, `dict`), supporting deeply nested configurations.
+- **Environment Variable Parsing**: Reads `.env` files using compound key syntax for arrays and dicts (e.g. `ARRAY_0=value`, `DICT_KEY=value`).
+- **Macro-Driven Iteration**: Convenient macros like `CMC_FOREACH_FIELD_ARRAY` simplify traversal of arrays and dictionaries.
+- **Strict Type Safety**: All field types are declared up front, and parsing validates types and presence.
+- **Zero External Dependencies**: Lightweight and embeddable in any C project.
+- **Extensible Design**: Built with parser plugin support—additional formats like JSON/YAML can be plugged in.
+- **Fully Tested**: Includes comprehensive tests using [Unity](https://www.throwtheswitch.org/unity) framework.
 
-## Getting Started
-
-### Usage Example
+## 🧠 Example Usage
 
 ```c
 #include "c_minilib_config.h"
 
 int main(void) {
-    config_t config;
-    
-    if (config_load(&config) != CONFIG_SUCCESS) {
-        fprintf(stderr, "Failed to load configuration.\n");
-        return 1;
-    }
+    cmc_error_t err = cmc_lib_init();
+    if (err) return 1;
 
-    printf("Server host: %s\n", config.server_host);
-    printf("Server port: %d\n", config.server_port);
+    struct cmc_Config *config;
+    char *paths[] = {"/etc/myapp"};
+    err = cmc_config_create(&(struct cmc_ConfigSettings){
+        .supported_paths = paths,
+        .paths_length = 1,
+        .name = "app",
+        .log_func = NULL,
+    }, &config);
+    if (err) return 1;
 
-    config_free(&config);
+    struct cmc_ConfigField *field;
+    err = cmc_field_create("host", cmc_ConfigFieldTypeEnum_STRING, "localhost", true, &field);
+    cmc_config_add_field(field, config);
+
+    err = cmc_config_parse(config);
+    if (err) return 1;
+
+    char *out = NULL;
+    cmc_field_get_str(field, &out);
+    printf("Host: %s\n", out);
+
+    cmc_config_destroy(&config);
+    cmc_lib_destroy();
     return 0;
 }
 ```
 
-### Configuration File Location
+## ⚙️ Build Instructions
 
-By default, `c_minilib_config` searches for configuration files at a predefined location. You can override this by setting the `CONFIG_PATH` environment variable:
+Using [Meson](https://mesonbuild.com):
 
-```shell
-export CONFIG_PATH=/path/to/config.yaml
+```sh
+meson setup build
+meson compile -C build
 ```
 
-## License
+## ✅ Run Tests
 
-`c_minilib_config` is distributed under the MIT license.
+```sh
+meson test -C build
+```
+
+> Tests are written with [Unity](https://www.throwtheswitch.org/unity) and include full coverage of parsing logic, nested data, optional/required fields, and type validation.
+
+## 🧰 Development Tools
+
+Automated workflows are managed via [Invoke](https://www.pyinvoke.org):
+
+```sh
+inv install    # Install required packages
+inv build      # Configure & compile
+inv test       # Run all tests
+inv lint       # Static analysis (clang-tidy)
+inv format     # Format code (clang-format)
+inv clean      # Clean build & temporary files
+```
+
+## 📚 Configuration Formats
+
+Supported (via plugins):
+
+- ✅ `.env` — flat key=value pairs with compound keys for nesting.
+- 🚧 `.json`, `.yaml` — support planned, pluggable parser interface is ready.
+
+## 🔍 Supported Field Types
+
+- `STRING`: key-value pair
+- `INT`: numeric configuration
+- `ARRAY`: homogeneous lists (`KEY_0`, `KEY_1`, ...)
+- `DICT`: nested key-value maps (`PARENT_CHILD=value`)
+
+Example `.env` for a nested config:
+
+```env
+SERVER_HOST=localhost
+SERVER_PORT=8080
+USERS_0_NAME=alice
+USERS_0_ROLE=admin
+USERS_1_NAME=bob
+USERS_1_ROLE=user
+```
+
+## 🧪 Debugging
+
+Enable detailed parser logs by providing a custom logger in `ConfigSettings`. You can also inspect values using `cmc_field_get_str`, `cmc_field_get_int`, and iteration macros.
+
+## 📄 License
+
+MIT License. See [LICENSE](LICENSE) for full text.
 
