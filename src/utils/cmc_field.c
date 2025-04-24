@@ -154,10 +154,7 @@ void cmc_field_destroy(struct cmc_ConfigField **field) {
     return;
   }
 
-  CMC_TREE_SUBNODES_ITER(subnode, (*field)->_self) {
-    struct cmc_ConfigField *subfield = cmc_field_of_node(subnode);
-    cmc_field_destroy(&subfield);
-  }
+  CMC_FIELD_FOREACH(subfield, *field, { cmc_field_destroy(&subfield); });
 
   cmc_tree_node_destroy(&(*field)->_self);
   cmc_field_value_destroy(field);

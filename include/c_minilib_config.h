@@ -91,11 +91,6 @@ struct cmc_ConfigField {
   struct cmc_TreeNode _self;
 };
 
-struct cmc_ConfigFieldIterator {
-  const struct cmc_ConfigField *parent;
-  uint32_t index;
-};
-
 // This function allocates memory, there is no need for exposing field destroy
 // to user
 //   because all fields (and their values) are freed on config destroy.

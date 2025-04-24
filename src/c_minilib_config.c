@@ -85,7 +85,7 @@ void cmc_config_destroy(struct cmc_Config **config) {
 
   cmc_settings_destroy(&(*config)->settings);
 
-  CMC_TREE_SUBNODES_ITER(subnode, (*config)->_fields) {
+  CMC_TREE_SUBNODES_FOREACH(subnode, (*config)->_fields) {
     struct cmc_ConfigField *subfield = cmc_field_of_node(subnode);
     cmc_field_destroy(&subfield);
   }

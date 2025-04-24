@@ -96,7 +96,7 @@ static cmc_error_t _cmc_env_parser_parse(const size_t n, const char path[n],
   //    have nested array than try to match for `name_0_0`
   //    and after that `name_N_P` etc. Once there is no
   //     match we stop looking further.
-  CMC_TREE_SUBNODES_ITER(node, config->_fields) {
+  CMC_TREE_SUBNODES_FOREACH(node, config->_fields) {
     struct cmc_ConfigField *field = cmc_field_of_node(node);
     bool found_value = false;
     err = _cmc_env_parser_parse_field(config_file, field, &found_value);
@@ -382,8 +382,8 @@ static cmc_error_t _cmc_field_deep_clone(struct cmc_ConfigField *src,
     return err;
   }
 
-  CMC_TREE_SUBNODES_ITER(subnode, src->_self) {
-    struct cmc_ConfigField *subfield_cp, *subfield = cmc_field_of_node(subnode);
+  CMC_FIELD_FOREACH(subfield, src, {
+    struct cmc_ConfigField *subfield_cp;
     err = _cmc_field_deep_clone(subfield, &subfield_cp);
     if (err) {
       return err;
@@ -396,7 +396,7 @@ static cmc_error_t _cmc_field_deep_clone(struct cmc_ConfigField *src,
     if (src->type == cmc_ConfigFieldTypeEnum_ARRAY) {
       break;
     }
-  }
+  })
 
   *dst = copy;
 
@@ -421,12 +421,10 @@ static cmc_error_t _cmc_env_parser_parse_dict_field(
   int32_t found_i = 0;
   cmc_error_t err;
 
-  CMC_TREE_SUBNODES_ITER(subnode, field->_self) {
-    struct cmc_ConfigField *subfield = cmc_field_of_node(subnode);
+  CMC_FIELD_FOREACH(subfield, field, {
     char *old_subfield_name = subfield->name;
     char *new_subfield_name =
         _cmc_env_parser_create_dict_name(field->name, subfield->name);
-    /* free(subfield->name); */
     subfield->name = new_subfield_name;
 
     bool local_found_value = true;
@@ -441,7 +439,7 @@ static cmc_error_t _cmc_env_parser_parse_dict_field(
     if (local_found_value) {
       found_i++;
     }
-  }
+  })
 
   if (found_i > 0) {
     *found_value = true;

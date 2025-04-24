@@ -23,16 +23,22 @@ cmc_field_of_node(struct cmc_TreeNode *node_ptr) {
   return cmc_container_of(node_ptr, struct cmc_ConfigField, _self);
 };
 
-#define CMC_FIELD_ITER_ARRAY(var, type, field, func)                           \
-  CMC_TREE_SUBNODES_ITER(__##var##subnode, (*field)->_self) {                  \
+#define CMC_FIELD_FOREACH(var, field, func)                                    \
+  CMC_TREE_SUBNODES_FOREACH(__##var##subnode, (field)->_self) {                \
+    struct cmc_ConfigField *(var) = cmc_field_of_node(__##var##subnode);       \
+    func                                                                       \
+  }
+
+#define CMC_FIELD_FOREACH_ARRAY(var, type, field, func)                        \
+  CMC_TREE_SUBNODES_FOREACH(__##var##subnode, (*field)->_self) {               \
     struct cmc_ConfigField *__##var##_subfield =                               \
         cmc_field_of_node(__##var##subnode);                                   \
     type var = __##var##_subfield->value;                                      \
     func                                                                       \
   }
 
-#define CMC_FIELD_ITER_DICT(var, type, field, func)                            \
-  CMC_TREE_SUBNODES_ITER(__##var##subnode, (*field)->_self) {                  \
+#define CMC_FIELD_FOREACH_DICT(var, type, field, func)                         \
+  CMC_TREE_SUBNODES_FOREACH(__##var##subnode, (*field)->_self) {               \
     struct cmc_ConfigField *__##var##_subfield =                               \
         cmc_field_of_node(__##var##subnode);                                   \
     char *var##_name = __##var##_subfield->name;                               \
