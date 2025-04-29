@@ -14,7 +14,7 @@ project('c_minilib_config', 'c',
 # ******************************************************************************
 # *    App
 # ******************************************************************************
-if get_option('backtrace').enabled()
+if get_option('backtrace')
   add_project_arguments('-DCME_ENABLE_BACKTRACE', language: 'c')
 endif
 
@@ -23,27 +23,30 @@ add_project_arguments('-D_POSIX_C_SOURCE=200809L', language: 'c')
 
 subdir('src')
 
-cmx_error_sub = subproject('c_minilib_error')
-cmx_error_dep = dependency('c_minilib_error',
-  fallback: ['c_minilib_error', 'cmx_error_dep'],
+c_minilib_error_sub = subproject('c_minilib_error')
+c_minilib_error_dep = dependency('c_minilib_error',
+  fallback: ['c_minilib_error', 'c_minilib_error_dep'],
   required: true,
 )
 
-cmx_config_inc = include_directories('include', 'src')
-cmx_config_lib = library('cmx_config',
+c_minilib_config_deps = [c_minilib_error_dep]
+c_minilib_config_inc = include_directories('include', 'src')
+c_minilib_config_lib = library('c_minilib_config',
                          sources,
-			 include_directories: cmx_config_inc,
-                         dependencies: [cmx_error_dep],
+			 include_directories: c_minilib_config_inc,
+                         dependencies: c_minilib_config_deps,
 )
-cmx_config_dep = declare_dependency(
-  link_with: cmx_config_lib,
-  include_directories: cmx_config_inc,
-  dependencies: [cmx_error_dep],  
+
+c_minilib_config_dep = declare_dependency(
+  link_with: c_minilib_config_lib,
+  include_directories: c_minilib_config_inc,
+  dependencies: c_minilib_config_deps,  
 )
 
 
 # ******************************************************************************
 # *    Tests
 # ******************************************************************************
-
-subdir('test')
+if get_option('tests')
+   subdir('test')
+endif

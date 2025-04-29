@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Jakub Buczynski <KubaTaba1uga>
+ * Copyright (c) 2025 Jakub Buczynski
  * SPDX-License-Identifier: MIT
  * See LICENSE file in the project root for full license information.
  */
@@ -50,11 +50,14 @@ void test_cmc_config_create_with_null_settings(void) {
 void test_cmc_config_create_with_valid_settings(void) {
   char *paths[] = {"/path/one", "/path/two"};
 
-  err = cmc_config_create(&(struct cmc_ConfigSettings){.supported_paths = paths,
-                                                       .paths_length = 2,
-                                                       .name = "test_config",
-                                                       .log_func = NULL},
-                          &config);
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){
+          .supported_paths = paths,
+          .paths_length = 2,
+          .name = "test_config",
+          .log_func = NULL,
+      },
+      &config);
 
   TEST_ASSERT_NULL(err);
   TEST_ASSERT_NOT_NULL(config);
@@ -78,17 +81,26 @@ void test_cmc_config_add_valid_field(void) {
     char name[FIELD_NAME_MAX];
     sprintf(name, "server_host_%d", i);
 
-    struct cmc_ConfigField *field;
+    struct cmc_ConfigField *field = NULL;
     err = cmc_field_create(name, cmc_ConfigFieldTypeEnum_STRING, "localhost",
                            true, &field);
     TEST_ASSERT_NULL(err);
 
     err = cmc_config_add_field(field, config);
     TEST_ASSERT_NULL(err);
-    TEST_ASSERT_NOT_NULL(config->fields);
-    TEST_ASSERT_EQUAL_STRING(name, config->fields->name);
-    TEST_ASSERT_EQUAL_STRING("localhost", (char *)config->fields->value);
-    TEST_ASSERT_TRUE(config->fields->optional);
+
+    // Confirm that field was attached into the config tree
+    bool found = false;
+    CMC_TREE_SUBNODES_FOREACH(subnode, config->_fields) {
+      struct cmc_ConfigField *attached = cmc_field_of_node(subnode);
+      if (strcmp(attached->name, name) == 0) {
+        TEST_ASSERT_EQUAL_STRING("localhost", (char *)attached->value);
+        TEST_ASSERT_TRUE(attached->optional);
+        found = true;
+        break;
+      }
+    }
+    TEST_ASSERT_TRUE(found);
   }
 }
 
@@ -104,17 +116,21 @@ void test_parse_superApp_env_and_getters(void) {
   TEST_ASSERT_NULL(err);
 
   char *paths[] = {(char *)CONFIG_DIR};
-  err = cmc_config_create(&(struct cmc_ConfigSettings){.supported_paths = paths,
-                                                       .paths_length = 1,
-                                                       .name = "superApp",
-                                                       .log_func = NULL},
-                          &config);
+  err = cmc_config_create(
+      &(struct cmc_ConfigSettings){
+          .supported_paths = paths,
+          .paths_length = 1,
+          .name = "superApp",
+          .log_func = NULL,
+      },
+      &config);
   TEST_ASSERT_NULL(err);
 
   struct cmc_ConfigField *f_name, *f_amount, *f_something, *f_arr,
       *f_arr_element;
   static int def_amount = 0;
 
+  // Create schema
   err = cmc_field_create("name", cmc_ConfigFieldTypeEnum_STRING, "<none>", true,
                          &f_name);
   TEST_ASSERT_NULL(err);
@@ -136,20 +152,20 @@ void test_parse_superApp_env_and_getters(void) {
   err = cmc_field_create("arr", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true,
                          &f_arr);
   TEST_ASSERT_NULL(err);
-
   err = cmc_config_add_field(f_arr, config);
   TEST_ASSERT_NULL(err);
 
   err = cmc_field_create("", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
                          &f_arr_element);
   TEST_ASSERT_NULL(err);
-
-  err = cmc_field_add_nested_field(f_arr, f_arr_element);
+  err = cmc_field_add_subfield(f_arr, f_arr_element);
   TEST_ASSERT_NULL(err);
 
+  // Parse
   err = cmc_config_parse(config);
   TEST_ASSERT_NULL(err);
 
+  // Validate parsed values
   char *val_name = NULL;
   err = cmc_field_get_str(f_name, &val_name);
   TEST_ASSERT_NULL(err);
@@ -170,7 +186,7 @@ void test_getters_on_unset_required_field_str(void) {
   err = cmc_config_create(NULL, &config);
   TEST_ASSERT_NULL(err);
 
-  struct cmc_ConfigField *field;
+  struct cmc_ConfigField *field = NULL;
   err = cmc_field_create("required_str", cmc_ConfigFieldTypeEnum_STRING, NULL,
                          false, &field);
   TEST_ASSERT_NULL(err);
@@ -187,7 +203,7 @@ void test_getters_on_unset_required_field_int(void) {
   err = cmc_config_create(NULL, &config);
   TEST_ASSERT_NULL(err);
 
-  struct cmc_ConfigField *field;
+  struct cmc_ConfigField *field = NULL;
   err = cmc_field_create("required_int", cmc_ConfigFieldTypeEnum_INT, NULL,
                          false, &field);
   TEST_ASSERT_NULL(err);

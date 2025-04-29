@@ -1,5 +1,15 @@
 option('backtrace',
-  type: 'feature',
-  value: 'auto',
+  type: 'boolean',
+  value: false,
   description: 'Enable backtrace support in cmc_error_t'
+)
+option('tests',
+  type: 'boolean',
+  value: false,
+  description: 'Build library tests'
+)
+option('examples',
+  type: 'boolean',
+  value: false,
+  description: 'Build library examples'
 )

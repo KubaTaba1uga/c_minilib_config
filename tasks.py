@@ -54,26 +54,38 @@ def install(c):
 
 
 @task
-def build(c, debug=False):
+def build(c, backtrace=False, debug=False, tests=False, examples=False):
+    """
+    Configure and build the project.
+
+    Args:
+        backtrace (bool): Enable backtrace support. Usage: inv build --backtrace
+        debug (bool): Build with debug symbols. Usage: inv build --debug
+    """
     _pr_info("Building...")
 
     _run_command(c, f"mkdir -p {BUILD_PATH}")
 
-    sanitize_option = (
-        "-Db_sanitize=address,undefined -Db_lundef=false -Dbacktrace=enabled -Dbuildtype=debug"
-        if debug
-        else "-Dbuildtype=release"
-    )
-    _run_command(
-        c,
-        f"CC={C_COMPILER} CC_LD={C_LINKER} meson setup {BUILD_PATH} {sanitize_option} --reconfigure",
-    )
+    setup_command = f"CC={C_COMPILER} meson setup {BUILD_PATH}"
 
+    if backtrace:
+        setup_command = f"{setup_command} -Dbacktrace=true"
+
+    if debug:
+        setup_command = f"{setup_command} -Db_sanitize=address,undefined -Db_lundef=false -Dbuildtype=debug"
+    else:
+        setup_command = f"{setup_command} -Dbuildtype=release"
+
+    if tests:
+        setup_command = f"{setup_command} -Dtests=true"
+
+    if examples:
+        setup_command = f"{setup_command} -Dexamples=true"
+
+    _run_command(c, setup_command)
     _run_command(c, f"meson compile -v -C {BUILD_PATH}")
+
     _pr_info("Build done")
-
-
-from invoke import task
 
 
 @task(iterable=["name"])

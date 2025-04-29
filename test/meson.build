@@ -4,9 +4,9 @@ unity_subproject = subproject('unity')
 
 unity_dependency = unity_subproject.get_variable('unity_dep')
 
-test_dependencies = [cmx_config_dep, unity_dependency]
+test_dependencies = [c_minilib_config_dep, unity_dependency]
 
-test_includes = [cmx_config_inc]
+test_includes = [c_minilib_config_inc]
 
 test_runner = unity_subproject.get_variable('gen_test_runner')
 
