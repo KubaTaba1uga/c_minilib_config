@@ -50,3 +50,10 @@ c_minilib_config_dep = declare_dependency(
 if get_option('tests')
    subdir('test')
 endif
+
+# ******************************************************************************
+# *    Tests
+# ******************************************************************************
+if get_option('examples')
+   subdir('example')
+endif

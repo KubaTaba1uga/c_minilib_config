@@ -133,7 +133,7 @@ error_out:
   return err;
 }
 
-static void cmc_env_parser_destroy(cmc_ConfigParserData *data) {
+static void cmc_env_parser_destroy(cmc_ConfigParserData *data){
 
 };
 
@@ -144,7 +144,7 @@ cmc_env_parser_parse_field(FILE *config_file, struct cmc_ConfigField *field,
   cmc_error_t err;
 
   CMC_LOG(settings, cmc_LogLevelEnum_DEBUG,                      // NOLINT
-          "Parsing name=%s, type=%d, children=%d, found=%d\n",   // NOLINT
+          "Parsing name=%s, type=%d, children=%d, found=%d",     // NOLINT
           field->name,                                           // NOLINT
           field->type, field->_self.subnodes_len, *found_value); // NOLINT
 
@@ -172,7 +172,7 @@ cmc_env_parser_parse_field(FILE *config_file, struct cmc_ConfigField *field,
   }
 
   CMC_LOG(settings, cmc_LogLevelEnum_DEBUG,                      // NOLINT
-          "Parsed name=%s, type=%d, children=%d, found=%d\n",    // NOLINT
+          "Parsed name=%s, type=%d, children=%d, found=%d",      // NOLINT
           field->name,                                           // NOLINT
           field->type, field->_self.subnodes_len, *found_value); // NOLINT
 

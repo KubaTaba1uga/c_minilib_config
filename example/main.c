@@ -1,6 +1,9 @@
+#include "c_minilib_error.h"
 #include <c_minilib_config.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+void log_(enum cmc_LogLevelEnum _, char *msg) { puts(msg); }
 
 int main(void) {
   cmc_error_t err;
@@ -14,13 +17,13 @@ int main(void) {
 
   // 2. Create config context
   struct cmc_Config *config = NULL;
-  char *paths[] = {"."};
+  char *paths[] = {".", "./example"};
   err = cmc_config_create(
       &(struct cmc_ConfigSettings){
           .supported_paths = paths,
-          .paths_length = 1,
+          .paths_length = 2,
           .name = "example", // Will look for ./example.env
-          .log_func = NULL,
+          .log_func = log_,
       },
       &config);
   if (err)
@@ -62,6 +65,9 @@ int main(void) {
   err = cmc_config_parse(config);
   if (err) {
     fprintf(stderr, "parse error\n");
+    cmc_config_destroy(&config);
+    cme_error_dump(err, "error_dump.txt");
+    cme_error_destroy(err);
     return 3;
   }
 
@@ -74,13 +80,14 @@ int main(void) {
   cmc_field_get_str(f_version, &version);
   cmc_field_get_str(f_license, &license);
 
-  printf("App Name: %s\n", name);
-  printf("App Port: %d\n", port);
-  printf("Meta Version: %s\n", version);
-  printf("Meta License: %s\n", license);
+  printf("%12s: %s\n", "App Name", name);
+  printf("%12s: %d\n", "App Port", port);
+  printf("%12s: %s\n", "Meta Version", version);
+  printf("%12s: %s\n", "Meta License", license);
 
-  printf("Users:\n");
-  CMC_FOREACH_FIELD_ARRAY(user, char *, &f_users, { printf(" - %s\n", user); });
+  printf("%12s:\n", "Users");
+  CMC_FOREACH_FIELD_ARRAY(user, char *, &f_users,
+                          { printf("%14s %s\n", "-", user); });
 
   // 6. Cleanup
   cmc_config_destroy(&config);
