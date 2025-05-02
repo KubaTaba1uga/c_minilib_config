@@ -15,7 +15,8 @@ project('c_minilib_config', 'c',
 # *    App
 # ******************************************************************************
 if get_option('backtrace')
-  add_project_arguments('-DCME_ENABLE_BACKTRACE', language: 'c')
+  add_project_arguments(['-DCME_ENABLE_BACKTRACE', '-g', '-fno-pie', '-fno-omit-frame-pointer'], language: 'c')
+  add_project_link_arguments(['-no-pie'], language: 'c')  
 endif
 
 # Enable posix functions
@@ -52,7 +53,7 @@ if get_option('tests')
 endif
 
 # ******************************************************************************
-# *    Tests
+# *    Examples
 # ******************************************************************************
 if get_option('examples')
    subdir('example')

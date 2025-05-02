@@ -18,7 +18,6 @@
 #include "cmc_parse_interface/cmc_env_parser/cmc_env_parser.h"
 #include "cmc_parse_interface/cmc_parse_interface.h"
 #include "utils/cmc_common.h"
-#include "utils/cmc_error.h"
 #include "utils/cmc_field.h"
 #include "utils/cmc_settings.h"
 #include "utils/cmc_string.h"
@@ -27,8 +26,8 @@
 static struct cmc_ConfigParseInterface parsers[cmc_ConfigParseFormat_MAX];
 static int32_t parsers_length = 0;
 
-cmc_error_t cmc_lib_init(void) {
-  cmc_error_t err;
+cme_error_t cmc_lib_init(void) {
+  cme_error_t err;
 
   if (parsers_length != 0) {
     return NULL;
@@ -36,27 +35,30 @@ cmc_error_t cmc_lib_init(void) {
 
   err = cmc_env_parser_init(&parsers[parsers_length++]);
   if (err) {
-    return err;
+    goto error_out;
   }
 
   return NULL;
+
+error_out:
+  return cme_return(err);
 };
 
 void cmc_lib_destroy(void) {}
 
-cmc_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,
+cme_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,
                               struct cmc_Config **config) {
   struct cmc_Config *local_config;
-  cmc_error_t err;
+  cme_error_t err;
 
   if (!config) {
-    err = cmc_errorf(EINVAL, "`config=%p` cannot be NULL\n", config);
+    err = cme_errorf(EINVAL, "`config=%p` cannot be NULL\n", config);
     goto error_out;
   }
 
   local_config = malloc(sizeof(struct cmc_Config));
   if (!local_config) {
-    err = cmc_errorf(ENOMEM, "Unable to allocate memory for `local_config`\n");
+    err = cme_errorf(ENOMEM, "Unable to allocate memory for `local_config`\n");
     goto error_out;
   }
 
@@ -83,7 +85,7 @@ cmc_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,
 error_config_cleanup:
   free(local_config);
 error_out:
-  return err;
+  return cme_return(err);
 };
 
 void cmc_config_destroy(struct cmc_Config **config) {
@@ -105,12 +107,12 @@ void cmc_config_destroy(struct cmc_Config **config) {
   *config = NULL;
 };
 
-cmc_error_t cmc_config_add_field(struct cmc_ConfigField *field,
+cme_error_t cmc_config_add_field(struct cmc_ConfigField *field,
                                  struct cmc_Config *config) {
-  cmc_error_t err;
+  cme_error_t err;
 
   if (!field || !config) {
-    err = cmc_errorf(EINVAL, "`field=%p` and `config=%p` cannot be NULL\n",
+    err = cme_errorf(EINVAL, "`field=%p` and `config=%p` cannot be NULL\n",
                      field, config);
     goto error_out;
   }
@@ -123,15 +125,15 @@ cmc_error_t cmc_config_add_field(struct cmc_ConfigField *field,
   return NULL;
 
 error_out:
-  return err;
+  return cme_return(err);
 };
 
-cmc_error_t cmc_config_parse(struct cmc_Config *config) { // NOLINT
+cme_error_t cmc_config_parse(struct cmc_Config *config) { // NOLINT
   struct cmc_ConfigParseInterface *parser;
-  cmc_error_t err;
+  cme_error_t err;
 
   if (!config) {
-    err = cmc_errorf(EINVAL, "`config=%p` cannot be NULL\n", config);
+    err = cme_errorf(EINVAL, "`config=%p` cannot be NULL\n", config);
     goto error_out;
   }
 
@@ -161,7 +163,7 @@ cmc_error_t cmc_config_parse(struct cmc_Config *config) { // NOLINT
       err = parser->is_format(sizeof(file_path) / sizeof(char), file_path,
                               &matched_parser);
       if (err) {
-        return err;
+        return cme_return(err);
       }
 
       if (matched_parser) {
@@ -190,12 +192,12 @@ cmc_error_t cmc_config_parse(struct cmc_Config *config) { // NOLINT
   }
 
   if (!matched_parser) {
-    err = cmc_errorf(ENOENT, "Unable to find configuration file\n", config);
+    err = cme_errorf(ENOENT, "Unable to find configuration file\n", config);
     goto error_out;
   }
 
   return NULL;
 
 error_out:
-  return err;
+  return cme_return(err);
 };

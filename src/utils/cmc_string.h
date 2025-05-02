@@ -15,8 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "utils/cmc_error.h"
-
 static inline void cmc_join_path_stack(char *out, size_t out_len,
                                        const char *dir_path,
                                        const char *config_name) {
@@ -33,16 +31,16 @@ static inline void cmc_join_str_stack(char *out, size_t out_len,
   }
 }
 
-static inline cmc_error_t cmc_convert_str_to_int(char *str, uint32_t n,
+static inline cme_error_t cmc_convert_str_to_int(char *str, uint32_t n,
                                                  int *output) {
-  cmc_error_t err;
+  cme_error_t err;
   for (uint32_t i = 0; i < n; i++) {
     if (str[i] == 0) {
       break;
     }
 
     if (!isdigit(str[i])) {
-      err = cmc_errorf(EINVAL, "Unable to convert to integer `str=%s`\n", str);
+      err = cme_errorf(EINVAL, "Unable to convert to integer `str=%s`\n", str);
       return err;
     }
   }

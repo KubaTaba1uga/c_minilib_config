@@ -132,6 +132,8 @@ def format(c):
         "src/**/*.c",
         "src/**/*.h",
         "include/**/*.h",
+        "example/**/*.c",
+        "example/**/*.h",
     ]
 
     _pr_info("Formating...")

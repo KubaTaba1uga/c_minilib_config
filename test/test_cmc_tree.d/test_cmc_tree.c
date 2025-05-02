@@ -4,13 +4,12 @@
  * See LICENSE file in the project root for full license information.
  */
 
-#include "utils/cmc_error.h"
 #include "utils/cmc_tree.h"
 #include <unity.h>
 
 static struct cmc_TreeNode node;
 static struct cmc_TreeNode child;
-static cmc_error_t err = NULL;
+static cme_error_t err = NULL;
 
 void setUp(void) {
   err = cmc_tree_node_create(&node);
@@ -20,7 +19,7 @@ void setUp(void) {
 }
 
 void tearDown(void) {
-  cmc_error_destroy(&err);
+  cme_error_destroy(err);
   cmc_tree_node_destroy(&node);
 }
 
@@ -56,7 +55,7 @@ void test_add_multiple_subnodes(void) {
 void test_null_input_handling(void) {
   err = cmc_tree_node_add_subnode(NULL, &node);
   TEST_ASSERT_NOT_NULL(err);
-  cmc_error_destroy(&err);
+  cme_error_destroy(err);
 
   err = cmc_tree_node_add_subnode(&child, NULL);
   TEST_ASSERT_NOT_NULL(err);

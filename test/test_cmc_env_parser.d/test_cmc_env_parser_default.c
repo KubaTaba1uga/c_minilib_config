@@ -13,7 +13,6 @@
 
 #include "c_minilib_config.h"
 #include "cmc_parse_interface/cmc_env_parser/cmc_env_parser.h"
-#include "utils/cmc_error.h"
 #include "utils/cmc_field.h"
 
 #ifndef CONFIG_PATH
@@ -22,7 +21,7 @@
 
 static struct cmc_ConfigParseInterface parser;
 static struct cmc_Config *config = NULL;
-static cmc_error_t err = NULL;
+static cme_error_t err = NULL;
 
 void setUp(void) {
   err = cmc_env_parser_init(&parser);
@@ -32,7 +31,7 @@ void setUp(void) {
 
 void tearDown(void) {
   cmc_config_destroy(&config);
-  cmc_error_destroy(&err);
+  cme_error_destroy(err);
 }
 
 void test_is_format_for_existing_config_env(void) {

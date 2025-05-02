@@ -14,7 +14,7 @@
 #include "utils/cmc_settings.h"
 
 static struct cmc_ConfigSettings *settings;
-static cmc_error_t err;
+static cme_error_t err;
 
 void setUp(void) {
   settings = NULL;
@@ -24,7 +24,7 @@ void setUp(void) {
 void tearDown(void) {
 
   cmc_settings_destroy(&settings);
-  cmc_error_destroy(&err);
+  cme_error_destroy(err);
 }
 
 void test_cmc_settings_create_basic(void) {

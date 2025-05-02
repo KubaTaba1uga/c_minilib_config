@@ -17,47 +17,46 @@
 #include "cmc_env_parser.h"
 #include "cmc_parse_interface/cmc_parse_interface.h"
 #include "utils/cmc_common.h"
-#include "utils/cmc_error.h"
 #include "utils/cmc_field.h"
 #include "utils/cmc_file.h"
 #include "utils/cmc_string.h"
 #include "utils/cmc_tree.h"
 
 static const char *cmc_env_parser_extension = ".env";
-static cmc_error_t cmc_env_parser_create(cmc_ConfigParserData *data);
-static cmc_error_t cmc_env_parser_is_format(const size_t n, const char path[n],
+static cme_error_t cmc_env_parser_create(cmc_ConfigParserData *data);
+static cme_error_t cmc_env_parser_is_format(const size_t n, const char path[n],
                                             bool *result);
-static cmc_error_t cmc_env_parser_parse(const size_t n, const char path[n],
+static cme_error_t cmc_env_parser_parse(const size_t n, const char path[n],
                                         const cmc_ConfigParserData data,
                                         struct cmc_Config *config);
 static void cmc_env_parser_destroy(cmc_ConfigParserData *data);
-static cmc_error_t
+static cme_error_t
 cmc_env_parser_parse_field(FILE *config_file, struct cmc_ConfigField *field,
                            bool *found_value,
                            struct cmc_ConfigSettings *settings);
-static cmc_error_t cmc_env_parser_parse_str_and_int_field(
+static cme_error_t cmc_env_parser_parse_str_and_int_field(
     FILE *config_file, struct cmc_ConfigField *field, bool *found_value,
     struct cmc_ConfigSettings *settings);
-static cmc_error_t
+static cme_error_t
 cmc_env_parser_parse_single_line(char *buffer,        // NOLINT
                                  uint32_t buffer_max, // NOLINT
                                  char **name,         // NOLINT
                                  char **value);       // NOLINT
-static cmc_error_t cmc_env_parser_parse_array_field(
+static cme_error_t cmc_env_parser_parse_array_field(
     FILE *config_file, struct cmc_ConfigField *field, bool *found_value,
     struct cmc_ConfigSettings *settings);
 static char *cmc_env_parser_create_array_name(const char *base_name,
                                               int32_t index);
-static cmc_error_t cmc_field_deep_clone(struct cmc_ConfigField *src,
+static cme_error_t cmc_field_deep_clone(struct cmc_ConfigField *src,
                                         struct cmc_ConfigField **dst);
 static void cmc_field_last_destroy(struct cmc_ConfigField *field);
-static cmc_error_t cmc_env_parser_parse_dict_field(
+static cme_error_t cmc_env_parser_parse_dict_field(
     FILE *config_file, struct cmc_ConfigField *field, bool *found_value,
     struct cmc_ConfigSettings *settings);
 static char *cmc_env_parser_create_dict_name(const char *dict_name,
                                              const char *key);
 
-cmc_error_t cmc_env_parser_init(struct cmc_ConfigParseInterface *parser) {
+cme_error_t cmc_env_parser_init(struct cmc_ConfigParseInterface *parser) {
   struct cmc_ConfigParseInterface env_parser = {
       .id = "env",
       .create = cmc_env_parser_create,
@@ -71,11 +70,11 @@ cmc_error_t cmc_env_parser_init(struct cmc_ConfigParseInterface *parser) {
   return NULL;
 };
 
-static cmc_error_t cmc_env_parser_create(cmc_ConfigParserData *data) {
+static cme_error_t cmc_env_parser_create(cmc_ConfigParserData *data) {
   return NULL;
 };
 
-static cmc_error_t cmc_env_parser_is_format(const size_t n, const char path[n],
+static cme_error_t cmc_env_parser_is_format(const size_t n, const char path[n],
                                             bool *result) {
   char new_file_path[PATH_MAX];
 
@@ -87,11 +86,11 @@ static cmc_error_t cmc_env_parser_is_format(const size_t n, const char path[n],
   return NULL;
 }
 
-static cmc_error_t cmc_env_parser_parse(const size_t n, const char path[n],
+static cme_error_t cmc_env_parser_parse(const size_t n, const char path[n],
                                         const cmc_ConfigParserData data,
                                         struct cmc_Config *config) {
 
-  cmc_error_t err;
+  cme_error_t err;
   char file_path[PATH_MAX];
 
   cmc_join_str_stack(file_path, sizeof(file_path), path,
@@ -99,7 +98,7 @@ static cmc_error_t cmc_env_parser_parse(const size_t n, const char path[n],
 
   FILE *config_file = fopen(file_path, "r");
   if (!config_file) {
-    err = cmc_errorf(EINVAL, "Unable to open %s\n", file_path);
+    err = cme_errorf(EINVAL, "Unable to open %s\n", file_path);
     goto error_out;
   }
   // We need for each field to iterate over a config file.
@@ -130,18 +129,18 @@ static cmc_error_t cmc_env_parser_parse(const size_t n, const char path[n],
 error_file_cleanup:
   fclose(config_file);
 error_out:
-  return err;
+  return cme_return(err);
 }
 
 static void cmc_env_parser_destroy(cmc_ConfigParserData *data){
 
 };
 
-static cmc_error_t
+static cme_error_t
 cmc_env_parser_parse_field(FILE *config_file, struct cmc_ConfigField *field,
                            bool *found_value,
                            struct cmc_ConfigSettings *settings) {
-  cmc_error_t err;
+  cme_error_t err;
 
   CMC_LOG(settings, cmc_LogLevelEnum_DEBUG,                      // NOLINT
           "Parsing name=%s, type=%d, children=%d, found=%d",     // NOLINT
@@ -165,7 +164,7 @@ cmc_env_parser_parse_field(FILE *config_file, struct cmc_ConfigField *field,
 
   default:
     err =
-        cmc_errorf(EINVAL, "Unrecognized type `field->type=%d`\n", field->type);
+        cme_errorf(EINVAL, "Unrecognized type `field->type=%d`\n", field->type);
   }
   if (err) {
     goto error_out;
@@ -177,7 +176,7 @@ cmc_env_parser_parse_field(FILE *config_file, struct cmc_ConfigField *field,
           field->type, field->_self.subnodes_len, *found_value); // NOLINT
 
   if (!*found_value && !field->optional) {
-    err = cmc_errorf(ENODATA, "Required field is missing `field->name=%s`\n",
+    err = cme_errorf(ENODATA, "Required field is missing `field->name=%s`\n",
                      field->name);
     goto error_out;
   }
@@ -185,16 +184,16 @@ cmc_env_parser_parse_field(FILE *config_file, struct cmc_ConfigField *field,
   return NULL;
 
 error_out:
-  return err;
+  return cme_return(err);
 }
 
-static cmc_error_t cmc_env_parser_parse_str_and_int_field( // NOLINT
+static cme_error_t cmc_env_parser_parse_str_and_int_field( // NOLINT
     FILE *config_file, struct cmc_ConfigField *field,      // NOLINT
     bool *found_value,                                     // NOLINT
     struct cmc_ConfigSettings *settings) {                 // NOLINT
   const uint32_t single_line_max = 255;
   char single_line_buffer[single_line_max];
-  cmc_error_t err;
+  cme_error_t err;
 
   fseek(config_file, 0, SEEK_SET);
 
@@ -214,7 +213,7 @@ static cmc_error_t cmc_env_parser_parse_str_and_int_field( // NOLINT
       free(env_field_name);
       free(env_field_value);
       if (err->code == ENODATA) {
-        cmc_error_destroy(&err);
+        cme_error_destroy(err);
         continue;
       }
       goto error_out;
@@ -247,7 +246,7 @@ static cmc_error_t cmc_env_parser_parse_str_and_int_field( // NOLINT
         err = cmc_field_add_value_int(field, value);
         break;
       default:;
-        err = cmc_errorf(ENOMEM, "Unrecognized value for `field->type=%d`\n",
+        err = cme_errorf(ENOMEM, "Unrecognized value for `field->type=%d`\n",
                          field->type);
       }
 
@@ -269,22 +268,22 @@ static cmc_error_t cmc_env_parser_parse_str_and_int_field( // NOLINT
   return NULL;
 
 error_out:
-  return err;
+  return cme_return(err);
 }
 
-static cmc_error_t
+static cme_error_t
 cmc_env_parser_parse_single_line(char *buffer,                // NOLINT
                                  uint32_t buffer_max,         // NOLINT
                                  char **name, char **value) { // NOLINT
   const char delimeter = '=';
   char *delimeter_ptr;
-  cmc_error_t err;
+  cme_error_t err;
 
   delimeter_ptr = strchr(buffer, delimeter);
   if (!delimeter_ptr) {
-    err = cmc_errorf(EINVAL, "No `delimeter=%c` found in `line=%s`\n",
+    err = cme_errorf(EINVAL, "No `delimeter=%c` found in `line=%s`\n",
                      delimeter, buffer);
-    return err;
+    return cme_return(err);
   }
 
   uint32_t env_field_name_len = delimeter_ptr - buffer;
@@ -303,9 +302,9 @@ cmc_env_parser_parse_single_line(char *buffer,                // NOLINT
   env_field_value[env_field_value_len] = 0;
 
   if (strlen(env_field_value) <= 1 || strlen(env_field_name) <= 1) {
-    err = cmc_errorf(ENODATA, "Unable to find value for `env_field_name=%s`",
+    err = cme_errorf(ENODATA, "Unable to find value for `env_field_name=%s`",
                      env_field_name);
-    return err;
+    goto error_out;
   }
 
   if (env_field_value[env_field_value_len - 1] == '\n') {
@@ -315,15 +314,15 @@ cmc_env_parser_parse_single_line(char *buffer,                // NOLINT
   *name = strdup(env_field_name);
   if (!*name) {
     err =
-        cmc_errorf(EINVAL, "Unable to allocate memory for `env_field_name=%s`",
+        cme_errorf(EINVAL, "Unable to allocate memory for `env_field_name=%s`",
                    env_field_name);
-    return err;
+    goto error_out;
   }
 
   *value = strdup(env_field_value);
   if (!*value) {
     err =
-        cmc_errorf(EINVAL, "Unable to allocate memory for `env_field_value=%s`",
+        cme_errorf(EINVAL, "Unable to allocate memory for `env_field_value=%s`",
                    env_field_value);
     goto error_out;
   }
@@ -331,13 +330,13 @@ cmc_env_parser_parse_single_line(char *buffer,                // NOLINT
   return NULL;
 
 error_out:
-  return err;
+  return cme_return(err);
 }
 
-static cmc_error_t cmc_env_parser_parse_array_field(
+static cme_error_t cmc_env_parser_parse_array_field(
     FILE *config_file, struct cmc_ConfigField *field, bool *found_value,
     struct cmc_ConfigSettings *settings) {
-  cmc_error_t err;
+  cme_error_t err;
 
   if (!field) {
     *found_value = false;
@@ -354,7 +353,7 @@ static cmc_error_t cmc_env_parser_parse_array_field(
         cmc_env_parser_create_array_name(field->name, index);
     if (!subfield_new_name) {
       err =
-          cmc_errorf(EINVAL, "Unable to allocate memory for `array_elem_name`");
+          cme_errorf(EINVAL, "Unable to allocate memory for `array_elem_name`");
       goto error_out;
     }
     free(subfield->name);
@@ -396,7 +395,7 @@ static cmc_error_t cmc_env_parser_parse_array_field(
   return NULL;
 
 error_out:
-  return err;
+  return cme_return(err);
 }
 
 static char *cmc_env_parser_create_array_name(const char *base_name,
@@ -413,23 +412,23 @@ static char *cmc_env_parser_create_array_name(const char *base_name,
   return strdup(buffer); // Caller must free
 }
 
-static cmc_error_t cmc_field_deep_clone(struct cmc_ConfigField *src,
+static cme_error_t cmc_field_deep_clone(struct cmc_ConfigField *src,
                                         struct cmc_ConfigField **dst) {
-  cmc_error_t err;
+  cme_error_t err;
 
   struct cmc_ConfigField *copy = NULL;
 
   err =
       cmc_field_create(src->name, src->type, src->value, src->optional, &copy);
   if (err) {
-    return err;
+    goto error_out;
   }
 
   CMC_FOREACH_FIELD(subfield, src, {
     struct cmc_ConfigField *subfield_cp;
     err = cmc_field_deep_clone(subfield, &subfield_cp);
     if (err) {
-      return err;
+      goto error_out;
     }
 
     cmc_field_add_subfield(copy, subfield_cp);
@@ -444,10 +443,12 @@ static cmc_error_t cmc_field_deep_clone(struct cmc_ConfigField *src,
   *dst = copy;
 
   return NULL;
+error_out:
+  return cme_return(err);
 }
 
 static void cmc_field_last_destroy(struct cmc_ConfigField *field) {
-  cmc_error_t err;
+  cme_error_t err;
 
   struct cmc_ConfigField *last_subfield =
       cmc_field_of_node(field->_self.subnodes[field->_self.subnodes_len - 1]);
@@ -455,15 +456,16 @@ static void cmc_field_last_destroy(struct cmc_ConfigField *field) {
 
   err = cmc_tree_node_pop_subnode(&field->_self);
   if (err) {
+    cme_error_destroy(err);
     return;
   }
 }
 
-static cmc_error_t cmc_env_parser_parse_dict_field(
+static cme_error_t cmc_env_parser_parse_dict_field(
     FILE *config_file, struct cmc_ConfigField *field, bool *found_value,
     struct cmc_ConfigSettings *settings) {
   int32_t found_i = 0;
-  cmc_error_t err;
+  cme_error_t err;
 
   CMC_FOREACH_FIELD(subfield, field, {
     char *old_subfield_name = subfield->name;
@@ -494,7 +496,7 @@ static cmc_error_t cmc_env_parser_parse_dict_field(
   return NULL;
 
 error_out:
-  return err;
+  return cme_return(err);
 }
 
 static char *cmc_env_parser_create_dict_name(const char *dict_name,

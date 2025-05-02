@@ -14,13 +14,13 @@
 #include "utils/cmc_common.h"
 
 #define cmc_container_of(ptr, type, member)                                    \
-  ((type *)((char *)(ptr) - offsetof(type, member)))
+  ((type *)((char *)(ptr)-offsetof(type, member)))
 
-cmc_error_t cmc_tree_node_create(struct cmc_TreeNode *node);
+cme_error_t cmc_tree_node_create(struct cmc_TreeNode *node);
 void cmc_tree_node_destroy(struct cmc_TreeNode *node);
 
-cmc_error_t cmc_tree_node_add_subnode(const struct cmc_TreeNode *subnode,
+cme_error_t cmc_tree_node_add_subnode(const struct cmc_TreeNode *subnode,
                                       struct cmc_TreeNode *node);
-cmc_error_t cmc_tree_node_pop_subnode(struct cmc_TreeNode *node);
+cme_error_t cmc_tree_node_pop_subnode(struct cmc_TreeNode *node);
 
 #endif // C_MINILIB_CONFIG_CMC_TREE_H

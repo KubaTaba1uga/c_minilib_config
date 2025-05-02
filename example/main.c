@@ -6,13 +6,12 @@
 void log_(enum cmc_LogLevelEnum _, char *msg) { puts(msg); }
 
 int main(void) {
-  cmc_error_t err;
+  cme_error_t err = NULL;
 
   // 1. Initialize library
   err = cmc_lib_init();
   if (err) {
-    fprintf(stderr, "init error\n");
-    return 1;
+    goto error_out;
   }
 
   // 2. Create config context
@@ -26,8 +25,9 @@ int main(void) {
           .log_func = log_,
       },
       &config);
-  if (err)
-    return 2;
+  if (err) {
+    goto error_out;
+  }
 
   // 3. Define fields
   struct cmc_ConfigField *f_name, *f_port, *f_users, *f_user_elem, *f_meta,
@@ -35,50 +35,101 @@ int main(void) {
 
   err = cmc_field_create("app_name", cmc_ConfigFieldTypeEnum_STRING,
                          "default_app", true, &f_name);
-  cmc_config_add_field(f_name, config);
+  if (err) {
+    goto error_out;
+  }
+  err = cmc_config_add_field(f_name, config);
+  if (err) {
+    goto error_out;
+  }
 
   int default_port = 80;
   err = cmc_field_create("app_port", cmc_ConfigFieldTypeEnum_INT, &default_port,
                          true, &f_port);
-  cmc_config_add_field(f_port, config);
+  if (err) {
+    goto error_out;
+  }
+  err = cmc_config_add_field(f_port, config);
+  if (err) {
+    goto error_out;
+  }
 
   err = cmc_field_create("app_users", cmc_ConfigFieldTypeEnum_ARRAY, NULL, true,
                          &f_users);
-  cmc_config_add_field(f_users, config);
+  if (err) {
+    goto error_out;
+  }
+  err = cmc_config_add_field(f_users, config);
+  if (err) {
+    goto error_out;
+  }
+
   err = cmc_field_create("", cmc_ConfigFieldTypeEnum_STRING, NULL, true,
                          &f_user_elem);
-  cmc_field_add_subfield(f_users, f_user_elem);
+  if (err) {
+    goto error_out;
+  }
+  err = cmc_field_add_subfield(f_users, f_user_elem);
+  if (err) {
+    goto error_out;
+  }
 
   err = cmc_field_create("app_meta", cmc_ConfigFieldTypeEnum_DICT, NULL, true,
                          &f_meta);
-  cmc_config_add_field(f_meta, config);
+  if (err) {
+    goto error_out;
+  }
+  err = cmc_config_add_field(f_meta, config);
+  if (err) {
+    goto error_out;
+  }
 
   err = cmc_field_create("version", cmc_ConfigFieldTypeEnum_STRING, "0.0.0",
                          true, &f_version);
-  cmc_field_add_subfield(f_meta, f_version);
+  if (err) {
+    goto error_out;
+  }
+  err = cmc_field_add_subfield(f_meta, f_version);
+  if (err) {
+    goto error_out;
+  }
 
   err = cmc_field_create("license", cmc_ConfigFieldTypeEnum_STRING, "unknown",
                          true, &f_license);
-  cmc_field_add_subfield(f_meta, f_license);
+  if (err) {
+    goto error_out;
+  }
+  err = cmc_field_add_subfield(f_meta, f_license);
+  if (err) {
+    goto error_out;
+  }
 
   // 4. Parse the config
   err = cmc_config_parse(config);
   if (err) {
-    fprintf(stderr, "parse error\n");
-    cmc_config_destroy(&config);
-    cme_error_dump(err, "error_dump.txt");
-    cme_error_destroy(err);
-    return 3;
+    goto error_out;
   }
 
   // 5. Retrieve values
   char *name = NULL, *version = NULL, *license = NULL;
   int port = -1;
 
-  cmc_field_get_str(f_name, &name);
-  cmc_field_get_int(f_port, &port);
-  cmc_field_get_str(f_version, &version);
-  cmc_field_get_str(f_license, &license);
+  err = cmc_field_get_str(f_name, &name);
+  if (err) {
+    goto error_out;
+  }
+  err = cmc_field_get_int(f_port, &port);
+  if (err) {
+    goto error_out;
+  }
+  err = cmc_field_get_str(f_version, &version);
+  if (err) {
+    goto error_out;
+  }
+  err = cmc_field_get_str(f_license, &license);
+  if (err) {
+    goto error_out;
+  }
 
   printf("%12s: %s\n", "App Name", name);
   printf("%12s: %d\n", "App Port", port);
@@ -89,8 +140,17 @@ int main(void) {
   CMC_FOREACH_FIELD_ARRAY(user, char *, &f_users,
                           { printf("%14s %s\n", "-", user); });
 
-  // 6. Cleanup
   cmc_config_destroy(&config);
   cmc_lib_destroy();
   return 0;
+
+error_out:
+  fprintf(stderr, "Error occurred:\n");
+  if (err) {
+    cme_error_dump_to_file(err, "error_dump.txt");
+    cme_error_destroy(err);
+  }
+  cmc_config_destroy(&config);
+  cmc_lib_destroy();
+  return 1;
 }

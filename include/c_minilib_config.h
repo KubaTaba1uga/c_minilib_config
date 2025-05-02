@@ -45,7 +45,7 @@
    Coding conventions:
      - Input arguments are always marked `const` and never modified.
      - Output arguments are never `const`, and are only written on success.
-     - All functions return a `cmc_error_t`. On error, outputs are undefined.
+     - All functions return a `cme_error_t`. On error, outputs are undefined.
      - Functions prefixed with `create` allocate memory.
        These require `destroy`.
      - Functions prefixed with `init` initialize a struct but never allocate it.
@@ -57,25 +57,15 @@
 /******************************************************************************
  *                             General                                        *
  ******************************************************************************/
-
-typedef struct cme_Error *cmc_error_t;
-
 /**
  * Initialize the config library. Must be called before any parsing.
  */
-cmc_error_t cmc_lib_init(void);
+cme_error_t cmc_lib_init(void);
 
 /**
  * Clean up global parser state. Call after all parsing is complete.
  */
 void cmc_lib_destroy(void);
-
-/**
- * Destroy a dynamically allocated error object.
- */
-static inline void cmc_error_destroy(cmc_error_t *error) {
-  cme_error_destroy((struct cme_Error *)*error);
-}
 
 /**
  * Internal representation of a node in the config tree.
@@ -130,7 +120,7 @@ struct cmc_ConfigField {
  * Create a new configuration field.
  * Allocates memory and stores optional default value.
  */
-cmc_error_t cmc_field_create(const char *name,
+cme_error_t cmc_field_create(const char *name,
                              const enum cmc_ConfigFieldTypeEnum type,
                              const void *default_value, const bool optional,
                              struct cmc_ConfigField **field);
@@ -139,17 +129,17 @@ cmc_error_t cmc_field_create(const char *name,
  * For arrays, the child's name is usually empty.
  * For dictionaries, the child must have a valid key name.
  */
-cmc_error_t cmc_field_add_subfield(struct cmc_ConfigField *field,
+cme_error_t cmc_field_add_subfield(struct cmc_ConfigField *field,
                                    struct cmc_ConfigField *child_field);
 /**
  * Get the parsed string value of a field.
  */
-cmc_error_t cmc_field_get_str(const struct cmc_ConfigField *field,
+cme_error_t cmc_field_get_str(const struct cmc_ConfigField *field,
                               char **output);
 /**
  * Get the parsed integer value of a field.
  */
-cmc_error_t cmc_field_get_int(const struct cmc_ConfigField *field, int *output);
+cme_error_t cmc_field_get_int(const struct cmc_ConfigField *field, int *output);
 
 /**
  * Convert a tree node pointer back to its containing field.
@@ -225,18 +215,18 @@ struct cmc_Config {
  * Create a new configuration context.
  * Allocates memory and copies the provided settings.
  */
-cmc_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,
+cme_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,
                               struct cmc_Config **config);
 /**
  * Add a top-level field to the configuration schema.
  */
-cmc_error_t cmc_config_add_field(struct cmc_ConfigField *field,
+cme_error_t cmc_config_add_field(struct cmc_ConfigField *field,
                                  struct cmc_Config *config);
 /**
  * Parse configuration from disk into fields values.
  * Automatically selects the best parser (e.g. `.env`).
  */
-cmc_error_t cmc_config_parse(struct cmc_Config *config);
+cme_error_t cmc_config_parse(struct cmc_Config *config);
 
 /**
  * Free all memory associated with the configuration object.

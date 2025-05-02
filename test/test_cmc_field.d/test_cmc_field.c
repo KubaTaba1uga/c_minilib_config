@@ -9,7 +9,6 @@
 #include <unity.h>
 
 #include "c_minilib_config.h"
-#include "utils/cmc_error.h"
 #include "utils/cmc_field.h"
 
 // Global parent fields only
@@ -18,7 +17,7 @@ static struct cmc_ConfigField *parent = NULL;
 static struct cmc_ConfigField *arr = NULL;
 static struct cmc_ConfigField *dict = NULL;
 
-static cmc_error_t err = NULL;
+static cme_error_t err = NULL;
 
 void setUp(void) {
   field = parent = arr = dict = NULL;
@@ -30,7 +29,7 @@ void tearDown(void) {
   cmc_field_destroy(&parent);
   cmc_field_destroy(&arr);
   cmc_field_destroy(&dict);
-  cmc_error_destroy(&err);
+  cme_error_destroy(err);
 }
 
 void test_field_create_null_args(void) {
