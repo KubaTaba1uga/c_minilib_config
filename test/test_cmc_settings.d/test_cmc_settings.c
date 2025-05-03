@@ -11,20 +11,21 @@
 #include <unity.h>
 
 #include "c_minilib_config.h"
+#include "c_minilib_error.h"
 #include "utils/cmc_settings.h"
 
 static struct cmc_ConfigSettings *settings;
 static cme_error_t err;
 
 void setUp(void) {
+  cme_init();
   settings = NULL;
   err = NULL;
 }
 
 void tearDown(void) {
-
   cmc_settings_destroy(&settings);
-  cme_error_destroy(err);
+  cme_destroy();
 }
 
 void test_cmc_settings_create_basic(void) {

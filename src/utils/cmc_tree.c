@@ -15,7 +15,7 @@ cme_error_t cmc_tree_node_create(struct cmc_TreeNode *node) {
   cme_error_t err;
 
   if (!node) {
-    err = cme_errorf(EINVAL, "`node=%p` cannot be NULL\n", node);
+    err = cme_error(EINVAL, "`node` cannot be NULL");
     goto error_out;
   }
 
@@ -44,8 +44,7 @@ cme_error_t cmc_tree_node_add_subnode(const struct cmc_TreeNode *subnode,
   cme_error_t err;
 
   if (!node || !subnode) {
-    err = cme_errorf(EINVAL, "`node=%p` and `subnode=%p` cannot be NULL\n",
-                     node, subnode);
+    err = cme_error(EINVAL, "`node` and `subnode` cannot be NULL");
     goto error_out;
   }
 
@@ -53,8 +52,7 @@ cme_error_t cmc_tree_node_add_subnode(const struct cmc_TreeNode *subnode,
       (void *)node->subnodes,
       (node->subnodes_len + 1) * sizeof(struct cmc_TreeNode *));
   if (!local_subnodes) {
-    err =
-        cme_errorf(ENOMEM, "Unable to allocate moemory for `local_subnodes`\n");
+    err = cme_error(ENOMEM, "Unable to allocate moemory for `local_subnodes`");
     goto error_out;
   }
 
@@ -72,13 +70,12 @@ cme_error_t cmc_tree_node_pop_subnode(struct cmc_TreeNode *node) {
   cme_error_t err;
 
   if (!node) {
-    err = cme_errorf(EINVAL, "`node=%p` cannot be NULL\n", node);
+    err = cme_error(EINVAL, "`node` cannot be NULL");
     goto error_out;
   }
 
   if (node->subnodes_len <= 0) {
-    err = cme_errorf(EINVAL, "`node->subnodes_len=%s` cannot be 0\n",
-                     node->subnodes_len);
+    err = cme_error(EINVAL, "`node->subnodes_len` cannot be 0");
     goto error_out;
   }
 
@@ -86,8 +83,7 @@ cme_error_t cmc_tree_node_pop_subnode(struct cmc_TreeNode *node) {
       (void *)node->subnodes,
       (node->subnodes_len - 1) * sizeof(struct cmc_TreeNode *));
   if (!local_subnodes) {
-    err =
-        cme_errorf(ENOMEM, "Unable to allocate moemory for `local_subnodes`\n");
+    err = cme_error(ENOMEM, "Unable to allocate moemory for `local_subnodes`");
     goto error_out;
   }
 

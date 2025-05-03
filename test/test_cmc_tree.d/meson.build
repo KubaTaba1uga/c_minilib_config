@@ -7,6 +7,7 @@ test_tree_exe = executable('test_cmc_tree',
   ],
   dependencies: test_dependencies,
   include_directories: test_includes,
+  c_args: ['-DCME_IMPL'],
 )
 
 test('test_cmc_tree', test_tree_exe)

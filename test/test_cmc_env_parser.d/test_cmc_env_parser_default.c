@@ -12,6 +12,7 @@
 #include <unity.h>
 
 #include "c_minilib_config.h"
+#include "c_minilib_error.h"
 #include "cmc_parse_interface/cmc_env_parser/cmc_env_parser.h"
 #include "utils/cmc_field.h"
 
@@ -24,6 +25,7 @@ static struct cmc_Config *config = NULL;
 static cme_error_t err = NULL;
 
 void setUp(void) {
+  cme_init();
   err = cmc_env_parser_init(&parser);
   TEST_ASSERT_NULL(err);
   config = NULL;
@@ -31,7 +33,7 @@ void setUp(void) {
 
 void tearDown(void) {
   cmc_config_destroy(&config);
-  cme_error_destroy(err);
+  cme_destroy();
 }
 
 void test_is_format_for_existing_config_env(void) {

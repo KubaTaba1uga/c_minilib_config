@@ -26,4 +26,4 @@ foreach cfg_name, define_arg : configs
   test(exe_name, exe)
 endforeach
 
-test_cmc_env_parser_name = 'test_cmc_env_parser.c'
+

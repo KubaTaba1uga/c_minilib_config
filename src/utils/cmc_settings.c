@@ -34,14 +34,13 @@ cme_error_t cmc_settings_create(const uint32_t paths_length,
   cme_error_t err;
 
   if (!settings) {
-    err = cme_errorf(EINVAL, "`settings=%p` cannot be NULL\n", settings);
+    err = cme_error(EINVAL, "`settings` cannot be NULL\n");
     goto error_out;
   }
 
   local_settings = malloc(sizeof(struct cmc_ConfigSettings));
   if (!local_settings) {
-    err =
-        cme_errorf(ENOMEM, "Unable to allocate memory for `local_settings`\n");
+    err = cme_error(ENOMEM, "Unable to allocate memory for `local_settings`");
     goto error_out;
   }
 
@@ -61,10 +60,8 @@ cme_error_t cmc_settings_create(const uint32_t paths_length,
     local_supported_paths = (char **)realloc(
         (void *)local_settings->supported_paths, sizeof(char *) * (i + 1));
     if (!local_supported_paths) {
-      err = cme_errorf(ENOMEM,
-                       "Unable to allocate memory for `local_supported_paths`, "
-                       "requested memory size: %d\n",
-                       sizeof(char *) * (i + 1));
+      err = cme_error(ENOMEM,
+                      "Unable to allocate memory for `local_supported_paths`");
       goto error_settings_paths_cleanup;
     }
 
@@ -97,8 +94,8 @@ cme_error_t cmc_settings_create(const uint32_t paths_length,
 
   local_settings->name = strdup(name);
   if (!local_settings->name) {
-    err = cme_errorf(ENOMEM, "Unable to allocate memory for "
-                             "`local_settings->name`\n");
+    err = cme_error(ENOMEM, "Unable to allocate memory for "
+                            "`local_settings->name`\n");
     goto error_settings_paths_iter_cleanup;
   }
 

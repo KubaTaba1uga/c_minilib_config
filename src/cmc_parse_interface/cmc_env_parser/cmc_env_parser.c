@@ -98,7 +98,7 @@ static cme_error_t cmc_env_parser_parse(const size_t n, const char path[n],
 
   FILE *config_file = fopen(file_path, "r");
   if (!config_file) {
-    err = cme_errorf(EINVAL, "Unable to open %s\n", file_path);
+    err = cme_errorf(EINVAL, "Unable to open %s", file_path);
     goto error_out;
   }
   // We need for each field to iterate over a config file.
@@ -163,8 +163,7 @@ cmc_env_parser_parse_field(FILE *config_file, struct cmc_ConfigField *field,
     break;
 
   default:
-    err =
-        cme_errorf(EINVAL, "Unrecognized type `field->type=%d`\n", field->type);
+    err = cme_errorf(EINVAL, "Unrecognized type `field->type=%d`", field->type);
   }
   if (err) {
     goto error_out;
@@ -176,7 +175,7 @@ cmc_env_parser_parse_field(FILE *config_file, struct cmc_ConfigField *field,
           field->type, field->_self.subnodes_len, *found_value); // NOLINT
 
   if (!*found_value && !field->optional) {
-    err = cme_errorf(ENODATA, "Required field is missing `field->name=%s`\n",
+    err = cme_errorf(ENODATA, "Required field is missing `field->name=%s`",
                      field->name);
     goto error_out;
   }
@@ -213,7 +212,6 @@ static cme_error_t cmc_env_parser_parse_str_and_int_field( // NOLINT
       free(env_field_name);
       free(env_field_value);
       if (err->code == ENODATA) {
-        cme_error_destroy(err);
         continue;
       }
       goto error_out;
@@ -246,7 +244,7 @@ static cme_error_t cmc_env_parser_parse_str_and_int_field( // NOLINT
         err = cmc_field_add_value_int(field, value);
         break;
       default:;
-        err = cme_errorf(ENOMEM, "Unrecognized value for `field->type=%d`\n",
+        err = cme_errorf(ENOMEM, "Unrecognized value for `field->type=%d`",
                          field->type);
       }
 
@@ -281,8 +279,8 @@ cmc_env_parser_parse_single_line(char *buffer,                // NOLINT
 
   delimeter_ptr = strchr(buffer, delimeter);
   if (!delimeter_ptr) {
-    err = cme_errorf(EINVAL, "No `delimeter=%c` found in `line=%s`\n",
-                     delimeter, buffer);
+    err = cme_errorf(EINVAL, "No `delimeter=%c` found in `line=%s`", delimeter,
+                     buffer);
     return cme_return(err);
   }
 
@@ -313,17 +311,13 @@ cmc_env_parser_parse_single_line(char *buffer,                // NOLINT
 
   *name = strdup(env_field_name);
   if (!*name) {
-    err =
-        cme_errorf(EINVAL, "Unable to allocate memory for `env_field_name=%s`",
-                   env_field_name);
+    err = cme_error(EINVAL, "Unable to allocate memory for `env_field_name`");
     goto error_out;
   }
 
   *value = strdup(env_field_value);
   if (!*value) {
-    err =
-        cme_errorf(EINVAL, "Unable to allocate memory for `env_field_value=%s`",
-                   env_field_value);
+    err = cme_error(EINVAL, "Unable to allocate memory for `env_field_value`");
     goto error_out;
   }
 
@@ -353,7 +347,7 @@ static cme_error_t cmc_env_parser_parse_array_field(
         cmc_env_parser_create_array_name(field->name, index);
     if (!subfield_new_name) {
       err =
-          cme_errorf(EINVAL, "Unable to allocate memory for `array_elem_name`");
+          cme_error(EINVAL, "Unable to allocate memory for `array_elem_name`");
       goto error_out;
     }
     free(subfield->name);
@@ -456,7 +450,6 @@ static void cmc_field_last_destroy(struct cmc_ConfigField *field) {
 
   err = cmc_tree_node_pop_subnode(&field->_self);
   if (err) {
-    cme_error_destroy(err);
     return;
   }
 }

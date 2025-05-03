@@ -29,24 +29,20 @@ cme_error_t cmc_field_create(const char *name,
   cme_error_t err;
 
   if (!name || !field) {
-    err = cme_errorf(EINVAL, "`name=%p` and `field=%p` cannot be NULL\n", name,
-                     field);
+    err = cme_error(EINVAL, "`name` and `field` cannot be NULL");
     goto error_out;
   }
 
   local_field = malloc(sizeof(struct cmc_ConfigField));
   if (!local_field) {
-    err = cme_errorf(ENOMEM,
-                     "Unable to allocate memory for `local_field`, "
-                     "requested memory size: %d\n",
-                     sizeof(struct cmc_ConfigField));
+    err = cme_error(ENOMEM, "Unable to allocate memory for `local_field`");
     goto error_out;
   }
 
   local_field->name = strdup(name);
   if (!local_field->name) {
-    err = cme_errorf(ENOMEM,
-                     "Unable to allocate memory for `local_field->name`\n");
+    err =
+        cme_error(ENOMEM, "Unable to allocate memory for `local_field->name`");
     goto error_field_cleanup;
   }
 
@@ -73,7 +69,7 @@ cme_error_t cmc_field_create(const char *name,
       local_field->value = NULL;
       break;
     default:
-      err = cme_errorf(EINVAL, "`type=%d` unrecognized\n", type);
+      err = cme_errorf(EINVAL, "`type=%d` unrecognized", type);
       goto error_field_name_cleanup;
     }
   }
@@ -100,8 +96,8 @@ cme_error_t cmc_field_add_subfield(struct cmc_ConfigField *field,
   cme_error_t err;
 
   if (!field || !child_field) {
-    err = cme_errorf(EINVAL, "`field=%p` and `child_field=%p` cannot be NULL\n",
-                     field, child_field);
+    err = cme_errorf(EINVAL, "`field` and `child_field` cannot be NULL", field,
+                     child_field);
     goto error_out;
   }
 
@@ -110,7 +106,7 @@ cme_error_t cmc_field_add_subfield(struct cmc_ConfigField *field,
   case cmc_ConfigFieldTypeEnum_DICT:
     break;
   default:
-    err = cme_errorf(EINVAL, "`field->type=%d` cannot be used as container\n",
+    err = cme_errorf(EINVAL, "`field->type=%d` cannot be used as container",
                      field->type);
     goto error_out;
   }
@@ -134,7 +130,7 @@ cme_error_t cmc_field_get_str(const struct cmc_ConfigField *field,
   } else {
     return cme_errorf(
         ENOENT,
-        "Missing value in field `field->name=%s`. Did you parsed config?\n",
+        "Missing value in field `field->name=%s`. Did you parsed config?",
         field->name);
   }
 
@@ -150,7 +146,7 @@ cme_error_t cmc_field_get_int(const struct cmc_ConfigField *field,
   } else {
     return cme_errorf(
         ENOENT,
-        "Missing value in field `field->name=%s`. Did you parsed config?\n",
+        "Missing value in field `field->name=%s`. Did you parsed config?",
         field->name);
   }
 
@@ -175,8 +171,7 @@ cme_error_t cmc_field_add_value_str(struct cmc_ConfigField *field,
                                     const char *value) {
   cme_error_t err;
   if (!field || !value) {
-    err = cme_errorf(EINVAL, "`field=%p` and `value=%p` cannot be NULL\n",
-                     field, value);
+    err = cme_error(EINVAL, "`field` and `value` cannot be NULL");
     goto error_out;
   }
 
@@ -200,7 +195,7 @@ cme_error_t cmc_field_add_value_int(struct cmc_ConfigField *field,
                                     const int32_t value) {
   cme_error_t err;
   if (!field) {
-    err = cme_errorf(EINVAL, "`field=%p` cannot be NULL\n", field, value);
+    err = cme_error(EINVAL, "`field` cannot be NULL");
     goto error_out;
   }
 
@@ -227,14 +222,13 @@ static inline cme_error_t cmc_alloc_field_value_str(const char *value,
                                                     void **field_value) {
   cme_error_t err;
   if (!value || !field_value) {
-    err =
-        cme_errorf(EINVAL, "`value=%p` and `field_value=%p` cannot be NULL\n");
+    err = cme_error(EINVAL, "`value` and `field_value` cannot be NULL");
     goto error_out;
   }
 
   *field_value = strdup(value);
   if (!*field_value) {
-    err = cme_errorf(ENOMEM, "Unable to allocate memory for `field->value`\n");
+    err = cme_error(ENOMEM, "Unable to allocate memory for `field->value`");
     goto error_out;
   }
 
@@ -248,13 +242,13 @@ static inline cme_error_t cmc_alloc_field_value_int(const int32_t value,
                                                     void **field_value) {
   cme_error_t err;
   if (!field_value) {
-    err = cme_errorf(EINVAL, "`field_value=%p` cannot be NULL\n");
+    err = cme_error(EINVAL, "`field_value` cannot be NULL");
     goto error_out;
   }
 
   int32_t *local_int = malloc(sizeof(int32_t));
   if (!local_int) {
-    err = cme_errorf(ENOMEM, "Unable to allocate memory for `field->value`\n");
+    err = cme_error(ENOMEM, "Unable to allocate memory for `field->value`");
     goto error_out;
   }
 

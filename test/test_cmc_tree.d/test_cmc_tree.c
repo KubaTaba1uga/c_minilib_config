@@ -12,6 +12,7 @@ static struct cmc_TreeNode child;
 static cme_error_t err = NULL;
 
 void setUp(void) {
+  cme_init();
   err = cmc_tree_node_create(&node);
   TEST_ASSERT_NULL(err);
   err = cmc_tree_node_create(&child);
@@ -19,6 +20,7 @@ void setUp(void) {
 }
 
 void tearDown(void) {
+  cme_destroy();
   cme_error_destroy(err);
   cmc_tree_node_destroy(&node);
 }

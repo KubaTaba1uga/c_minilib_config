@@ -11,6 +11,7 @@ test_settings_exe = executable('test_cmc_settings',
   ],
   dependencies: test_dependencies,
   include_directories: test_includes,  
+  c_args: ['-DCME_IMPL'],
 )
 
 test('test_cmc_settings', test_settings_exe)

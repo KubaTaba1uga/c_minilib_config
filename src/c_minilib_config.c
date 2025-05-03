@@ -4,6 +4,7 @@
  * See LICENSE file in the project root for full license information.
  */
 
+#include <asm-generic/errno-base.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdint.h>
@@ -27,10 +28,16 @@ static struct cmc_ConfigParseInterface parsers[cmc_ConfigParseFormat_MAX];
 static int32_t parsers_length = 0;
 
 cme_error_t cmc_lib_init(void) {
+
   cme_error_t err;
 
   if (parsers_length != 0) {
     return NULL;
+  }
+
+  if (cme_init() != 0) {
+    err = cme_error(ENOMEM, "Unable to initialize c minilib error");
+    goto error_out;
   }
 
   err = cmc_env_parser_init(&parsers[parsers_length++]);
@@ -44,7 +51,7 @@ error_out:
   return cme_return(err);
 };
 
-void cmc_lib_destroy(void) {}
+void cmc_lib_destroy(void) { cme_destroy(); }
 
 cme_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,
                               struct cmc_Config **config) {
@@ -52,13 +59,13 @@ cme_error_t cmc_config_create(const struct cmc_ConfigSettings *settings,
   cme_error_t err;
 
   if (!config) {
-    err = cme_errorf(EINVAL, "`config=%p` cannot be NULL\n", config);
+    err = cme_error(EINVAL, "`config` cannot be NULL");
     goto error_out;
   }
 
   local_config = malloc(sizeof(struct cmc_Config));
   if (!local_config) {
-    err = cme_errorf(ENOMEM, "Unable to allocate memory for `local_config`\n");
+    err = cme_error(ENOMEM, "Unable to allocate memory for `local_config`");
     goto error_out;
   }
 
@@ -112,8 +119,7 @@ cme_error_t cmc_config_add_field(struct cmc_ConfigField *field,
   cme_error_t err;
 
   if (!field || !config) {
-    err = cme_errorf(EINVAL, "`field=%p` and `config=%p` cannot be NULL\n",
-                     field, config);
+    err = cme_error(EINVAL, "`field` and `config` cannot be NULL");
     goto error_out;
   }
 
@@ -133,7 +139,7 @@ cme_error_t cmc_config_parse(struct cmc_Config *config) { // NOLINT
   cme_error_t err;
 
   if (!config) {
-    err = cme_errorf(EINVAL, "`config=%p` cannot be NULL\n", config);
+    err = cme_error(EINVAL, "`config` cannot be NULL");
     goto error_out;
   }
 
@@ -192,7 +198,7 @@ cme_error_t cmc_config_parse(struct cmc_Config *config) { // NOLINT
   }
 
   if (!matched_parser) {
-    err = cme_errorf(ENOENT, "Unable to find configuration file\n", config);
+    err = cme_error(ENOENT, "Unable to find configuration file");
     goto error_out;
   }
 

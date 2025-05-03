@@ -11,8 +11,9 @@
 #include <unistd.h>
 #include <unity.h>
 
+#include <c_minilib_error.h>
+
 #include "c_minilib_config.h"
-#include "c_minilib_error.h"
 #include "utils/cmc_field.h"
 #include "utils/cmc_settings.h"
 
@@ -25,13 +26,14 @@ static struct cmc_Config *config = NULL;
 static cme_error_t err = NULL;
 
 void setUp(void) {
+  cme_init();
   config = NULL;
   err = NULL;
 }
 
 void tearDown(void) {
   cmc_config_destroy(&config);
-  cme_error_destroy(err);
+  cme_destroy();
 }
 
 void test_cmc_config_create_null_output(void) {
