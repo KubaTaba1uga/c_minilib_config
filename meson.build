@@ -29,9 +29,6 @@ add_project_arguments('-D_POSIX_C_SOURCE=200809L', language: 'c')
 subdir('src')
 libdl = cc.find_library('dl', required: true)
 
-c_minilib_error_sub = subproject('c_minilib_error',
-  default_options: ['backtrace=' + enable_backtrace.to_string()]  
-)
 c_minilib_error_dep = dependency('c_minilib_error',
   fallback: ['c_minilib_error', 'c_minilib_error_dep'],
   required: true,
